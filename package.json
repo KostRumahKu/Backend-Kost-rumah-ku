@@ -1,0 +1,23 @@
+{
+  "name": "backend-kost-rumah-ku",
+  "module": "index.ts",
+  "version": "0.1",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "bun --watch src/server.js",
+    "start": "bun run src/server.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "mongoose": "^9.10.3"
+  }
+}
