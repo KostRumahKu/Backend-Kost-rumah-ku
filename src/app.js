@@ -3,13 +3,17 @@
 // tempat import library
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
+
 // import routes from "./routes/index.route.js";
 
 // import middleware
-import { verifyInternalKey } from "./middlewares/auth.middleware.js";
+import { verifyInternalKey } from "./middlewares/apikey.middleware.js";
 
 const app = express(); // janga di ganggu gugat bagian ini variabel app buat express di atas 
-
+const ENV = process.env.NODE_ENV || "development";
+const loggerFormat = ENV === "production" ? "combined" : "dev";
+app.use(morgan(loggerFormat));
 // cors
 app.use(cors());
 app.use(verifyInternalKey); // middleware buat verifikasi internal key, kalau mau di hapus tinggal hapus aja baris ini, tapi jangan di hapus kalau mau di pake internal key
