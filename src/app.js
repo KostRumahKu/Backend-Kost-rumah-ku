@@ -1,16 +1,14 @@
 // ====== app.js ======
 import express from "express";
 import cors from "cors";
-import morgan from "morgan";
 
 import routes from "./routes/index-route.js";
 import { verifyInternalKey } from "./middlewares/apikey-middleware.js";
+import { loggerSetup } from "./logger-setup.js";
 
 const app = express(); 
 
-const ENV = process.env.NODE_ENV || "development";
-const loggerFormat = ENV === "production" ? "combined" : "dev";
-app.use(morgan(loggerFormat));
+loggerSetup(app);
 app.use(cors());
 
 app.use(express.json());
