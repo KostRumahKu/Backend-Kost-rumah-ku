@@ -1,4 +1,4 @@
-import { pelanggan } from "../models/pelanggan.model";
+import { pelanggan } from "../models/pengguna-model.js.js";
 
 export const getAllPelanggan = async () => {
   return await pelanggan.find();

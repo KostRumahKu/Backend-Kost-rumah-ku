@@ -4,9 +4,7 @@ import { connectDatabase } from "./config/database.js";
 
 const PORT = process.env.PORT || 3000;
 
-// gua pakai await di sini biar nunggu database connect dulu baru jalanin servernya, kalau gak di await bisa aja server jalan tapi database belum connect
-// sementara ini di matiin baut test sampai models nya ada
-// await connectDatabase();
+await connectDatabase();
 
 app.listen(PORT, () => {
   console.log(
