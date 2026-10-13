@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const pemesananSchema = new mongoose.Schema({
   'id-pengguna': { type: mongoose.Schema.Types.ObjectId, ref: 'Pengguna', required: true },
-  'id-kamar': { type: mongoose.Schema.Types.ObjectId, ref: 'Kamar', required: true },
+  'id-kamar': { type: Number, ref: 'Kamar', required: true },
   'tanggal-pesan': { type: Date, default: Date.now },
   'durasi-bulan': { type: Number, required: true },
   'status': { 

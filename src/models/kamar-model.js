@@ -22,7 +22,11 @@ const kamarSchema = new mongoose.Schema({
   'fasilitas': [{ type: String }],
   'deskripsi': { type: String },
   'foto': [{ type: String }],
-  'lantai': { type: Number, required: true } // Contoh: 1, 2, atau 3
+  'lantai': { type: Number, required: true }, // Contoh: 1, 2, atau 3
+  'diarsipkan': { 
+    type: Boolean, 
+    default: false 
+  }
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
 });

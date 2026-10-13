@@ -13,7 +13,7 @@ const penggunaSchema = new mongoose.Schema({
   'nama-kontak-darurat': { type: String },
   'nomor-kontak-darurat': { type: String },
   'id-kamar': { 
-    type: mongoose.Schema.Types.ObjectId, 
+    type: Number, 
     ref: 'Kamar', 
     default: null 
   },
