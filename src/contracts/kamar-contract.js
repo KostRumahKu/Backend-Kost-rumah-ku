@@ -25,3 +25,8 @@ export const kontrakUbahKamar = {
   "status": "String (Opsional, nilai harus: 'kosong', 'dipesan', 'terisi', atau 'perbaikan')",
   "foto": "Array of String (Opsional, berisi daftar URL atau nama fail foto)"
 };
+
+export const kontrakPindahKamar = {
+  "id-pengguna": "String (Wajib, ID penyewa yang akan pindah)",
+  "id-kamar-baru": "Number (Wajib, ID kamar tujuan)"
+};

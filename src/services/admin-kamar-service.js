@@ -5,15 +5,22 @@ import Pemesanan from "../models/pemesanan-model.js";
 import Tagihan from "../models/tagihan-model.js";
 import Pembayaran from "../models/pembayaran-model.js";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { kirimEmail } from "../utils/mail-service.js";
+import { templateAkunBaru } from "../utils/email-templates.js";
 
 import { generateIdPengguna } from "./pengguna-service.js";
+import { AppError } from "../errors.js";
 // ============== Fungsi Service untuk Admin/Pemilik ==============
 // ============= FUNGSI MMEBUAT KAMAR BARU ==============
 export const tambahKamarBaru = async (dataKamar) => {
   const { lantai } = dataKamar;
 
   if (!lantai) {
-    throw new Error("Lantai wajib diisi untuk menentukan nomor kamar");
+    throw new AppError(
+      "KAMAR_FLOOR_REQUIRED",
+      "Lantai wajib diisi untuk menentukan nomor kamar",
+    );
   }
 
   const kamarTerakhir = await Kamar.findOne({ lantai: lantai }).sort({
@@ -31,11 +38,14 @@ export const tambahKamarBaru = async (dataKamar) => {
     dataKamar["tipe-kamar"] &&
     !["ekonomi", "eksekutif"].includes(dataKamar["tipe-kamar"])
   ) {
-    throw new Error("Tipe kamar harus 'ekonomi' atau 'eksekutif'");
+    throw new AppError(
+      "KAMAR_INVALID_TYPE",
+      "Tipe kamar harus 'ekonomi' atau 'eksekutif'",
+    );
   }
 
   if (dataKamar["harga"] && dataKamar["harga"] < 0) {
-    throw new Error("Harga kamar tidak boleh negatif");
+    throw new AppError("KAMAR_INVALID_PRICE", "Harga kamar tidak boleh negatif");
   }
 
   const payloadKamar = {
@@ -61,8 +71,17 @@ export const ambilSemuaKamar = async (query = {}) => {
   if (query.status) {
     filter.status = query.status;
   }
-  if (query.lantai) {
-    filter.lantai = parseInt(query.lantai, 10);
+  if (query.lantai !== undefined && query.lantai !== "") {
+    const lantai = Number(query.lantai);
+
+    if (!Number.isInteger(lantai) || lantai < 1) {
+      throw new AppError(
+        "KAMAR_INVALID_FLOOR",
+        "Parameter lantai harus berupa angka bulat positif.",
+      );
+    }
+
+    filter.lantai = lantai;
   }
 
   if (query["tipe-kamar"]) {
@@ -78,7 +97,7 @@ export const ambilDetailKamar = async (idKamar) => {
   const kamar = await Kamar.findById(idKamar).lean();
 
   if (!kamar) {
-    throw new Error("Kamar tidak ditemukan");
+    throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
   }
 
   let penghuniAktif = null; // default null karena gak ada orang yang nempatin
@@ -102,14 +121,22 @@ export const ambilDetailKamar = async (idKamar) => {
 
 export const ubahDataKamar = async (idKamar, dataUpdate) => {
   const kamarSaatIni = await Kamar.findById(idKamar);
-  if (!kamarSaatIni) throw new Error("Kamar tidak ditemukan");
+  if (!kamarSaatIni) {
+    throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
+  }
   if (dataUpdate.status && dataUpdate.status !== kamarSaatIni.status) {
     if (kamarSaatIni.status === 'terisi') {
-      throw new Error("Gagal! Kamar sedang terisi. Silakan gunakan fitur Reset/Checkout terlebih dahulu sebelum mengubah status kamar menjadi kosong atau perbaikan.");
+      throw new AppError(
+        "KAMAR_STATUS_CONFLICT",
+        "Gagal! Kamar sedang terisi. Silakan gunakan fitur Reset/Checkout terlebih dahulu sebelum mengubah status kamar menjadi kosong atau perbaikan.",
+      );
     }
 
     if (dataUpdate.status === 'terisi') {
-      throw new Error("Gagal! Anda tidak bisa mengubah status menjadi 'terisi' secara manual. Harap gunakan fitur Input Penghuni / Entry Data untuk mengisi kamar.");
+      throw new AppError(
+        "KAMAR_STATUS_CONFLICT",
+        "Gagal! Anda tidak bisa mengubah status menjadi 'terisi' secara manual. Harap gunakan fitur Input Penghuni / Entry Data untuk mengisi kamar.",
+      );
     }
   }
 
@@ -137,10 +164,11 @@ export const ubahDataKamar = async (idKamar, dataUpdate) => {
 
 export const hapusKamar = async (idKamar, isPermanent = false) => {
   const kamar = await Kamar.findById(idKamar);
-  if (!kamar) throw new Error("Kamar tidak ditemukan");
+  if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
 
   if (kamar.status === "terisi" || kamar.status === "dipesan") {
-    throw new Error(
+    throw new AppError(
+      "KAMAR_STATUS_CONFLICT",
       "Kamar tidak dapat dihapus karena sedang dipesan atau terisi",
     );
   }
@@ -159,10 +187,13 @@ export const resetKamar = async (
   catatanAdmin = "Selesai masa sewa",
 ) => {
   const kamar = await Kamar.findById(idKamar);
-  if (!kamar) throw new Error("Kamar tidak ditemukan");
+  if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
 
   if (kamar.status !== "terisi") {
-    throw new Error("Kamar tidak dapat direset karena statusnya belum terisi");
+    throw new AppError(
+      "KAMAR_STATUS_CONFLICT",
+      "Kamar tidak dapat direset karena statusnya belum terisi",
+    );
   }
 
   const penghuni = await Pengguna.findOne({
@@ -191,7 +222,16 @@ export const resetKamar = async (
   }
 
   kamar.status = "kosong";
+  kamar["penghuni-aktif"] = null;
   await kamar.save();
+
+  const penyewaLama = await Pengguna.findOne({ "id-kamar": idKamar });
+  if (penyewaLama) {
+    penyewaLama["id-kamar"] = null;
+    penyewaLama["tanggal-mulai"] = null;
+    penyewaLama["tanggal-berakhir"] = null;
+    await penyewaLama.save(); 
+  }
 
   return kamar;
 };
@@ -201,19 +241,18 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
   const { dataPengguna, dataSewa } = dataPayload;
 
   const kamar = await Kamar.findById(idKamar);
-  if (!kamar) throw new Error("Kamar tidak ditemukan");
+  if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
   if (kamar.status !== 'kosong') {
     if (kamar.status === 'dipesan') {
-      throw new Error("Gagal! Kamar saat ini sedang 'dipesan'. Harap ubah statusnya menjadi 'kosong' terlebih dahulu melalui menu Edit Kamar jika Anda benar-benar ingin memasukkan penghuni ini.");
+      throw new AppError("KAMAR_STATUS_CONFLICT", "Gagal! Kamar saat ini sedang 'dipesan'. Harap ubah statusnya menjadi 'kosong' terlebih dahulu melalui menu Edit Kamar jika Anda benar-benar ingin memasukkan penghuni ini.");
     } else if (kamar.status === 'perbaikan') {
-      throw new Error("Gagal! Kamar sedang dalam 'perbaikan' dan tidak bisa diisi penghuni baru.");
+      throw new AppError("KAMAR_STATUS_CONFLICT", "Gagal! Kamar sedang dalam 'perbaikan' dan tidak bisa diisi penghuni baru.");
     } else if (kamar.status === 'terisi') {
-      throw new Error("Gagal! Kamar sudah 'terisi'. Harap lakukan Reset/Checkout pada penghuni sebelumnya.");
+      throw new AppError("KAMAR_STATUS_CONFLICT", "Gagal! Kamar sudah 'terisi'. Harap lakukan Reset/Checkout pada penghuni sebelumnya.");
     }
   }
 
   const hargaBulanan = kamar.harga;
-
   const durasiBulan = dataSewa["durasi-bulan"];
   const tanggalMulai = new Date(dataSewa["tanggal-mulai"]);
   const tanggalBerakhir = new Date(tanggalMulai);
@@ -222,10 +261,16 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
   let penyewa = await Pengguna.findOne({ email: dataPengguna.email });
 
   if (penyewa && penyewa["id-kamar"] && penyewa["id-kamar"] !== idKamar) {
-    throw new Error(
-      `Gagal! Akun dengan email ini masih aktif menyewa kamar ${penyewa["id-kamar"]}. Harap checkout terlebih dahulu.`,
-    );
+    const cekKamarLama = await Kamar.findById(penyewa["id-kamar"]);
+    if (cekKamarLama && cekKamarLama.status !== "kosong") {
+      throw new AppError(
+        "KAMAR_STATUS_CONFLICT",
+        `Gagal! Akun dengan email ini masih aktif menyewa kamar ${penyewa["id-kamar"]}. Harap checkout terlebih dahulu.`,
+      );
+    }
+    
   }
+
 
   const cekTelepon = await Pengguna.findOne({
     "nomor-telepon": dataPengguna["nomor-telepon"],
@@ -236,11 +281,14 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
   ) {
     throw new Error("Nomor telepon penyewa sudah digunakan oleh akun lain!");
   }
+  let isAkunBaru = false; 
+  const passwordDefault = crypto.randomBytes(4).toString("hex");
 
-  if (!penyewa) {
+if (!penyewa) {
+    isAkunBaru = true; 
     const customId = await generateIdPengguna(tanggalMulai);
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("rahasia123", salt);
+    const hashedPassword = await bcrypt.hash(passwordDefault, salt);
 
     penyewa = new Pengguna({
       _id: customId,
@@ -260,10 +308,9 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
     penyewa["id-kamar"] = idKamar;
     penyewa["tanggal-mulai"] = tanggalMulai;
     penyewa["tanggal-berakhir"] = tanggalBerakhir;
-    if (dataPengguna["nama-kontak-darurat"])
-      penyewa["nama-kontak-darurat"] = dataPengguna["nama-kontak-darurat"];
-    if (dataPengguna["nomor-kontak-darurat"])
-      penyewa["nomor-kontak-darurat"] = dataPengguna["nomor-kontak-darurat"];
+    penyewa["nomor-telepon"] = dataPengguna["nomor-telepon"];
+    if (dataPengguna["nama-kontak-darurat"]) penyewa["nama-kontak-darurat"] = dataPengguna["nama-kontak-darurat"];
+    if (dataPengguna["nomor-kontak-darurat"]) penyewa["nomor-kontak-darurat"] = dataPengguna["nomor-kontak-darurat"];
   }
   await penyewa.save();
 
@@ -283,7 +330,6 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
     month: "long",
     year: "numeric",
   });
-
   const tagihanBaru = new Tagihan({
     "id-pengguna": penyewa._id,
     "id-kamar": idKamar,
@@ -306,9 +352,24 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
 
   kamar.status = "terisi";
   await kamar.save();
+  if (isAkunBaru) {
+    kirimEmail({
+      to: penyewa.email,
+      subject: "Selamat Datang! Informasi Akun KostRumahKu",
+      html: templateAkunBaru(
+        penyewa['nama-lengkap'],
+        penyewa.email,
+        passwordDefault,
+        kamar['nama-kamar'] 
+      )
+    }).catch(err => {
+      console.error("[MAIL ALERT] Gagal mengirim email welcome:", err.message);
+    });
+  }
 
   const penyewaResponse = penyewa.toObject();
   delete penyewaResponse["kata-sandi"];
+  
   const kamarResponse = {
     "_id": kamar._id,
     "nama-tampilan": `Kamar ${penyewa['nama-lengkap']}`, 
@@ -330,9 +391,12 @@ export const entryDataLama = async (idKamar, dataPayload) => {
   const { dataPengguna, dataSewa } = dataPayload;
 
   const kamar = await Kamar.findById(idKamar);
-  if (!kamar) throw new Error("Kamar tidak ditemukan");
+  if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
   if (kamar.status !== "kosong")
-    throw new Error("Kamar tidak kosong! Harap reset kamar terlebih dahulu.");
+    throw new AppError(
+      "KAMAR_STATUS_CONFLICT",
+      "Kamar tidak kosong! Harap reset kamar terlebih dahulu.",
+    );
 
   const hargaBulanan = kamar.harga;
   const tanggalMasukAsli = new Date(dataSewa["tanggal-mulai"]);
@@ -349,7 +413,8 @@ export const entryDataLama = async (idKamar, dataPayload) => {
   let penyewa = await Pengguna.findOne({ email: dataPengguna.email });
 
   if (penyewa && penyewa["id-kamar"] && penyewa["id-kamar"] !== idKamar) {
-    throw new Error(
+    throw new AppError(
+      "KAMAR_STATUS_CONFLICT",
       `Gagal! Akun ini masih terikat di kamar ${penyewa["id-kamar"]}.`,
     );
   }
@@ -360,7 +425,10 @@ export const entryDataLama = async (idKamar, dataPayload) => {
     cekTelepon &&
     (!penyewa || cekTelepon._id.toString() !== penyewa._id.toString())
   ) {
-    throw new Error("Nomor telepon penyewa sudah digunakan oleh akun lain!");
+    throw new AppError(
+      "KAMAR_PHONE_ALREADY_USED",
+      "Nomor telepon penyewa sudah digunakan oleh akun lain!",
+    );
   }
 
   if (!penyewa) {
@@ -470,5 +538,84 @@ export const entryDataLama = async (idKamar, dataPayload) => {
     kamar: kamarResponse,
     nomorInvoice,
     totalHarga,
+  };
+};
+
+
+
+export const pindahKamar = async (dataPayload) => {
+  const { 'id-pengguna': idPengguna, 'id-kamar-baru': idKamarBaru } = dataPayload;
+
+  const penyewa = await Pengguna.findById(idPengguna);
+  if (!penyewa) throw new AppError("TENANT_NOT_FOUND", "Penyewa tidak ditemukan.");
+  if (!penyewa['id-kamar']) {
+    throw new AppError(
+      "TENANT_NOT_IN_ROOM",
+      "Penyewa ini tidak sedang menempati kamar manapun.",
+    );
+  }
+
+  const idKamarLama = penyewa['id-kamar'];
+  if (Number(idKamarLama) === Number(idKamarBaru)) {
+    throw new AppError(
+      "TENANT_ALREADY_IN_ROOM",
+      "Gagal! Penyewa sudah berada di kamar tersebut.",
+    );
+  }
+
+  const kamarBaru = await Kamar.findById(idKamarBaru);
+  if (!kamarBaru) {
+    throw new AppError("KAMAR_NOT_FOUND", "Kamar tujuan tidak ditemukan.");
+  }
+  if (kamarBaru.status !== 'kosong') {
+    throw new AppError(
+      "ROOM_NOT_AVAILABLE",
+      `Kamar tujuan (${idKamarBaru}) tidak berstatus kosong!`,
+    );
+  }
+
+  const kamarLama = await Kamar.findById(idKamarLama);
+  const riwayatBaru = new RiwayatSewa({
+    'id-pengguna': penyewa._id,
+    'nama-penyewa': penyewa['nama-lengkap'], 
+    'id-kamar': kamarLama._id,
+    'tanggal-masuk': penyewa['tanggal-mulai'],
+    'tanggal-keluar': new Date(),
+    'keterangan': `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`
+  });
+
+  const errorValidasi = riwayatBaru.validateSync();
+  if (errorValidasi) {
+    throw new AppError(
+      "KAMAR_INVALID_HISTORY",
+      `Validasi Riwayat Gagal: ${errorValidasi.message}`,
+    );
+  }
+  penyewa['id-kamar'] = idKamarBaru;
+  await penyewa.save();
+
+  kamarBaru.status = 'terisi';
+  await kamarBaru.save();
+
+  if (kamarLama) {
+    kamarLama.status = 'kosong';
+    await kamarLama.save();
+  }
+
+  await riwayatBaru.save(); 
+
+  const penyewaResponse = penyewa.toObject();
+  delete penyewaResponse['kata-sandi'];
+
+  return {
+    penyewa: penyewaResponse,
+    kamarLama: { _id: idKamarLama, status: 'kosong' },
+    kamarBaru: {
+      _id: kamarBaru._id,
+      'nama-tampilan': `Kamar ${penyewa['nama-lengkap']}`,
+      'tipe-kamar': kamarBaru['tipe-kamar'],
+      harga: kamarBaru.harga
+    },
+    catatan_keuangan: `Perpindahan berhasil. Tagihan bulan depan akan otomatis menyesuaikan dengan harga kamar baru.`
   };
 };
