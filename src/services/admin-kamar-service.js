@@ -101,21 +101,36 @@ export const ambilDetailKamar = async (idKamar) => {
     throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
   }
 
-  let penghuniAktif = null; // default null karena gak ada orang yang nempatin
+  let penghuniAktif = null;
 
   if (kamar.status === "terisi") {
     penghuniAktif = await Pengguna.findOne({
       "id-kamar": idKamar,
       peran: "penyewa",
-    }).select("-kata-sandi");
+    })
+      .select("-kata-sandi")
+      .lean();
   }
 
-  const riwayatSewa = await RiwayatSewa.find({ "id-kamar": idKamar }).sort({
-    "tanggal-masuk": -1,
-  });
+  const riwayatSewa = await RiwayatSewa.find({ "id-kamar": idKamar })
+    .sort({ "tanggal-masuk": -1 })
+    .lean();
+
+  const riwayatSewaLengkap = await Promise.all(
+    riwayatSewa.map(async (riwayat) => {
+      const detailPengguna = await Pengguna.findById(riwayat["id-pengguna"])
+        .select("-kata-sandi")
+        .lean();
+
+      return {
+        ...riwayat,
+        "profil-penyewa": detailPengguna || null,
+      };
+    }),
+  );
 
   kamar["penghuni-aktif"] = penghuniAktif;
-  kamar["riwayat-sewa"] = riwayatSewa;
+  kamar["riwayat-sewa"] = riwayatSewaLengkap;
 
   return kamar;
 };
