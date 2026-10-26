@@ -16,10 +16,8 @@ router.post("/:id/reset", kamarController.resetKamar); //done test
 
 router.post("/:id/input-penghuni-manual", kamarController.inputPenghuniManual); //done test
 
-/* kurang email service */
 router.post("/:id/entry-data-lama", kamarController.entryDataLama);//done test
 
-/* kurang email service */
-router.post("/pindah", kamarController.pindahKamar);
+router.post("/pindah", kamarController.pindahKamar);//done test
 
 export default router;

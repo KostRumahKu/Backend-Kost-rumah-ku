@@ -7,7 +7,8 @@ import Pembayaran from "../models/pembayaran-model.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { kirimEmail } from "../utils/mail-service.js";
-import { templateAkunBaru } from "../utils/email-templates.js";
+import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../utils/email-templates.js";
+
 
 import { generateIdPengguna } from "./pengguna-service.js";
 import { AppError } from "../errors.js";
@@ -219,6 +220,16 @@ export const resetKamar = async (
         "tanggal-berakhir": null,
       },
     });
+    kirimEmail({
+      to: penghuni.email,
+      subject: "Terima Kasih! Masa Sewa Anda Telah Berakhir",
+      html: templateCheckout(
+        penghuni["nama-lengkap"],
+        kamar["nama-kamar"] || kamar._id,
+      ),
+    }).catch((err) => {
+      console.error("[MAIL ALERT] Gagal mengirim email checkout:", err.message);
+    });
   }
 
   kamar.status = "kosong";
@@ -391,6 +402,7 @@ export const entryDataLama = async (idKamar, dataPayload) => {
   const { dataPengguna, dataSewa } = dataPayload;
 
   const kamar = await Kamar.findById(idKamar);
+  
   if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
   if (kamar.status !== "kosong")
     throw new AppError(
@@ -431,10 +443,14 @@ export const entryDataLama = async (idKamar, dataPayload) => {
     );
   }
 
-  if (!penyewa) {
+  let isAkunBaru = false;
+  const passwordDefault = crypto.randomBytes(4).toString("hex");
+
+if (!penyewa) {
+    isAkunBaru = true; 
     const customId = await generateIdPengguna(tanggalMasukAsli);
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("rahasia123", salt);
+    const hashedPassword = await bcrypt.hash(passwordDefault, salt);
 
     penyewa = new Pengguna({
       _id: customId,
@@ -490,6 +506,24 @@ export const entryDataLama = async (idKamar, dataPayload) => {
   kamar.status = "terisi";
   await kamar.save();
 
+  if (isAkunBaru) {
+    kirimEmail({
+      to: penyewa.email,
+      subject: "Selamat Datang! Akses Akun KostRumahKu Anda",
+      html: templateAkunBaru(
+        penyewa["nama-lengkap"],
+        penyewa.email,
+        passwordDefault,
+        kamar["nama-kamar"],
+      ),
+    }).catch((err) => {
+      console.error(
+        "[MAIL ALERT] Gagal mengirim email (Migrasi):",
+        err.message,
+      );
+    });
+  }
+
   // ==========================================
   // [CADANGAN] OPSI 3: AUTO-LOOPING INVOICE (Riwayat Penuh 2024-2026)
   // pas Stakeholder minta saat UAT, matikan kode Opsi 1 di atas, lalu nyalakan komentar ini:
@@ -528,7 +562,7 @@ export const entryDataLama = async (idKamar, dataPayload) => {
     _id: kamar._id,
     "nama-tampilan": `Kamar ${penyewa["nama-lengkap"]}`,
     "nama-asli": `kamar ${kamar['nama-kamar']}`,
-    "tipe-kamar": kamar["tipe-kamar"],
+    "tipe-kamar": kamar["tipe-kamar"],  
     lantai: kamar.lantai,
     harga: kamar.harga,
   };
@@ -541,21 +575,22 @@ export const entryDataLama = async (idKamar, dataPayload) => {
   };
 };
 
-
-
 export const pindahKamar = async (dataPayload) => {
-  const { 'id-pengguna': idPengguna, 'id-kamar-baru': idKamarBaru } = dataPayload;
+  const { "id-pengguna": idPengguna, "id-kamar-baru": idKamarBaru } =
+    dataPayload;
 
   const penyewa = await Pengguna.findById(idPengguna);
-  if (!penyewa) throw new AppError("TENANT_NOT_FOUND", "Penyewa tidak ditemukan.");
-  if (!penyewa['id-kamar']) {
+
+  if (!penyewa)
+    throw new AppError("TENANT_NOT_FOUND", "Penyewa tidak ditemukan.");
+  if (!penyewa["id-kamar"]) {
     throw new AppError(
       "TENANT_NOT_IN_ROOM",
       "Penyewa ini tidak sedang menempati kamar manapun.",
     );
   }
 
-  const idKamarLama = penyewa['id-kamar'];
+  const idKamarLama = penyewa["id-kamar"];
   if (Number(idKamarLama) === Number(idKamarBaru)) {
     throw new AppError(
       "TENANT_ALREADY_IN_ROOM",
@@ -567,7 +602,7 @@ export const pindahKamar = async (dataPayload) => {
   if (!kamarBaru) {
     throw new AppError("KAMAR_NOT_FOUND", "Kamar tujuan tidak ditemukan.");
   }
-  if (kamarBaru.status !== 'kosong') {
+  if (kamarBaru.status !== "kosong") {
     throw new AppError(
       "ROOM_NOT_AVAILABLE",
       `Kamar tujuan (${idKamarBaru}) tidak berstatus kosong!`,
@@ -576,12 +611,12 @@ export const pindahKamar = async (dataPayload) => {
 
   const kamarLama = await Kamar.findById(idKamarLama);
   const riwayatBaru = new RiwayatSewa({
-    'id-pengguna': penyewa._id,
-    'nama-penyewa': penyewa['nama-lengkap'], 
-    'id-kamar': kamarLama._id,
-    'tanggal-masuk': penyewa['tanggal-mulai'],
-    'tanggal-keluar': new Date(),
-    'keterangan': `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`
+    "id-pengguna": penyewa._id,
+    "nama-penyewa": penyewa["nama-lengkap"],
+    "id-kamar": kamarLama._id,
+    "tanggal-masuk": penyewa["tanggal-mulai"],
+    "tanggal-keluar": new Date(),
+    keterangan: `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`,
   });
 
   const errorValidasi = riwayatBaru.validateSync();
@@ -591,31 +626,49 @@ export const pindahKamar = async (dataPayload) => {
       `Validasi Riwayat Gagal: ${errorValidasi.message}`,
     );
   }
-  penyewa['id-kamar'] = idKamarBaru;
+  penyewa["id-kamar"] = idKamarBaru;
   await penyewa.save();
 
-  kamarBaru.status = 'terisi';
+  kamarBaru.status = "terisi";
   await kamarBaru.save();
 
   if (kamarLama) {
-    kamarLama.status = 'kosong';
+    kamarLama.status = "kosong";
     await kamarLama.save();
   }
 
-  await riwayatBaru.save(); 
+  await riwayatBaru.save();
 
+  kirimEmail({
+    to: penyewa.email,
+    subject: `Update Kost: Anda pindah ke Kamar ${kamarBaru["nama-kamar"] || kamarBaru._id}`,
+    html: templatePindahKamar(
+      penyewa["nama-lengkap"],
+      kamarLama["nama-kamar"] || kamarLama._id,
+      kamarBaru["nama-kamar"] || kamarBaru._id,
+      kamarBaru["tipe-kamar"],
+      kamarBaru.lantai,
+      kamarBaru.harga,
+    ),
+  }).catch((err) => {
+    console.error(
+      "[MAIL ALERT] Gagal mengirim email pindah kamar:",
+      err.message,
+    );
+  });
+  
   const penyewaResponse = penyewa.toObject();
-  delete penyewaResponse['kata-sandi'];
+  delete penyewaResponse["kata-sandi"];
 
   return {
     penyewa: penyewaResponse,
-    kamarLama: { _id: idKamarLama, status: 'kosong' },
+    kamarLama: { _id: idKamarLama, status: "kosong" },
     kamarBaru: {
       _id: kamarBaru._id,
-      'nama-tampilan': `Kamar ${penyewa['nama-lengkap']}`,
-      'tipe-kamar': kamarBaru['tipe-kamar'],
-      harga: kamarBaru.harga
+      "nama-tampilan": `Kamar ${penyewa["nama-lengkap"]}`,
+      "tipe-kamar": kamarBaru["tipe-kamar"],
+      harga: kamarBaru.harga,
     },
-    catatan_keuangan: `Perpindahan berhasil. Tagihan bulan depan akan otomatis menyesuaikan dengan harga kamar baru.`
+    catatan_keuangan: `Perpindahan berhasil. Tagihan bulan depan akan otomatis menyesuaikan dengan harga kamar baru.`,
   };
 };
