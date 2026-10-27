@@ -1,5 +1,5 @@
 import express from "express";
-import * as kamarController from "../controllers/admin-kamar.controller.js";
+import * as kamarController from "../controllers/admin-kamar-controller.js";
 import { verifikasiToken, otorisasiPeran } from "../middlewares/auth-middleware.js";
 
 const router = express.Router();
@@ -14,7 +14,10 @@ router.put("/:id", kamarController.ubahKamar); //done test
 router.delete("/:id", kamarController.hapusKamar); //done test
 router.post("/:id/reset", kamarController.resetKamar); //done test
 
-/* untested jangan dipakai dulu karena belum ada email service + securty issue */
-router.post("/:id/input-penghuni-manual", kamarController.inputPenghuniManual); 
+router.post("/:id/input-penghuni-manual", kamarController.inputPenghuniManual); //done test
+
+router.post("/:id/entry-data-lama", kamarController.entryDataLama);//done test
+
+router.post("/pindah", kamarController.pindahKamar);//done test
 
 export default router;

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const tagihanSchema = new mongoose.Schema({
-  'id-pengguna': { type: mongoose.Schema.Types.ObjectId, ref: 'Pengguna', required: true },
+  'id-pengguna': { type: String, ref: 'Pengguna', required: true },
   'id-kamar': { type: Number, ref: 'Kamar', required: true },
   'nomor-tagihan': { type: String, required: true, unique: true },
   'bulan-tagihan': { type: String, required: true }, 

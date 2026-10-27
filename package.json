@@ -4,9 +4,15 @@
   "version": "0.1",
   "type": "module",
   "main": "src/app.js",
+  "engines": {
+    "node": ">22.23.4",
+    "bun": ">1.4.3"
+  },
   "scripts": {
-    "dev": "bun --watch src/server.js",
-    "start": "bun run src/server.js"
+    "dev:bun": "bun --watch src/server.js",
+    "start:bun": "bun run src/server.js",
+    "dev:node": "node --watch src/server.js",
+    "start:node": "node src/server.js"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -18,9 +24,10 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.6",
-    "express": "^5.2.1",
+    "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.3",
-    "morgan": "^1.12.1"
+    "morgan": "^1.12.1",
+    "resend": "^6.34.1"
   }
 }

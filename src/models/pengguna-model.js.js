@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const penggunaSchema = new mongoose.Schema({
+  '_id': { type: String, required: true },
   'nama-lengkap': { type: String, required: true },
   'email': { type: String, required: true, unique: true },
   'kata-sandi': { type: String, required: false },
@@ -9,9 +10,9 @@ const penggunaSchema = new mongoose.Schema({
     enum: ['pemilik', 'admin', 'penyewa', 'calon-penyewa'], 
     default: 'calon-penyewa' 
   },
-  'nomor-telepon': { type: String },
-  'nama-kontak-darurat': { type: String },
-  'nomor-kontak-darurat': { type: String },
+  'nomor-telepon': { type: String, required: true, unique: true },
+  'nama-kontak-darurat': { type: String, required: true },
+  'nomor-kontak-darurat': { type: String, required: true },
   'id-kamar': { 
     type: Number, 
     ref: 'Kamar', 
