@@ -19,7 +19,9 @@ const penggunaSchema = new mongoose.Schema({
     default: null 
   },
   'tanggal-mulai': { type: Date },
-  'tanggal-berakhir': { type: Date }
+  'tanggal-berakhir': { type: Date },
+  'otp-reset': { type: String, default: null },
+  'otp-kedaluwarsa': { type: Date, default: null },
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
 });

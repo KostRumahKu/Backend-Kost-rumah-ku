@@ -111,3 +111,21 @@ export const templateCheckout = (nama, kamarAsli) => {
 
   return baseHtml(konten);
 };
+
+export const templateOTP = (nama, otp) => {
+  const konten = `
+    <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}! 🔐</h3>
+    <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun Kost RumahKu Anda.</p>
+    
+    <div style="background-color: #f9fafb; border-left: 4px solid #f59e0b; padding: 24px; margin: 24px 0; border-radius: 4px; text-align: center;">
+      <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">KODE OTP ANDA:</p>
+      <p style="margin: 0; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #111827;">${otp}</p>
+    </div>
+    
+    <p style="color: #ef4444; font-size: 14px;"><b>⚠️ Penting:</b> Kode ini hanya berlaku selama <b>5 menit</b>. Jangan berikan kode ini kepada siapa pun, termasuk admin.</p>
+    <p>Jika Anda tidak pernah meminta pengaturan ulang kata sandi, abaikan email ini.</p>
+    <br>
+    <p>Terima kasih,<br><b>Admin Kost RumahKu</b></p>
+  `;
+  return baseHtml(konten);
+};
