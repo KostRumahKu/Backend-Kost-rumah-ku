@@ -1,0 +1,32 @@
+const ERROR_STATUS = {
+  BAD_REQUEST: 400,
+  VALIDATION_ERROR: 400,
+  KAMAR_FLOOR_REQUIRED: 400,
+  KAMAR_INVALID_FLOOR: 400,
+  KAMAR_INVALID_TYPE: 400,
+  KAMAR_INVALID_PRICE: 400,
+  KAMAR_INVALID_HISTORY: 400,
+  KAMAR_NOT_FOUND: 404,
+  TENANT_NOT_FOUND: 404,
+  ROUTE_TIDAK_DITEMUKAN: 404,
+  KAMAR_STATUS_CONFLICT: 409,
+  KAMAR_PHONE_ALREADY_USED: 409,
+  TENANT_NOT_IN_ROOM: 409,
+  TENANT_ALREADY_IN_ROOM: 409,
+  ROOM_NOT_AVAILABLE: 409,
+  AUTH_INVALID_CREDENTIALS: 401,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  INTERNAL_SERVER_ERROR: 500,
+  EMAIL_SERVICE_ERROR: 500,
+};
+
+export class AppError extends Error {
+  constructor(code, message, details) {
+    super(message);
+    this.name = "AppError";
+    this.code = code;
+    this.statusCode = ERROR_STATUS[code] ?? 500;
+    if (details !== undefined) this.details = details;
+  }
+}
