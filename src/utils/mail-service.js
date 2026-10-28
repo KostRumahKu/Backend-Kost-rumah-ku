@@ -5,7 +5,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 
 const SENDER_EMAIL = process.env.SENDER_EMAIL;
-
+/*
+if (!resend){
+  res.status(500).json({
+    status: "error",
+    message: "resend apikey belum terisi!"
+  });
+};
+*/
 export const kirimEmail = async ({ to, subject, html }) => {
   try {
     const data = await resend.emails.send({

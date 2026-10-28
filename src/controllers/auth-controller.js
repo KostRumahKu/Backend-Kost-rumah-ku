@@ -1,6 +1,6 @@
 import * as authService from "../services/auth-service.js";
 import { AppError } from "../errors.js";
-import { kontrakRequestOTP, kontrakKonfirmasiOTP } from "../contracts/auth-contract.js";
+import { kontrakAuth, kontrakRequestOTP, kontrakKonfirmasiOTP } from "../contracts/auth-contract.js";
 
 // Fungsi pembungkus untuk menangani login berdasarkan peran
 const loginBerdasarkanPeran = (peran) => async (req, res) => {
@@ -9,7 +9,8 @@ const loginBerdasarkanPeran = (peran) => async (req, res) => {
   if (!email || !kataSandi) {
     throw new AppError(
       "VALIDATION_ERROR",
-      "Email dan kata sandi wajib diisi",
+      "Formar data tidak lengkap!",
+      { kebutuhan_payload: kontrakAuth }
     );
   }
 
