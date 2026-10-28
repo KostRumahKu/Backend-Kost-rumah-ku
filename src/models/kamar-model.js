@@ -1,34 +1,29 @@
 import mongoose from 'mongoose';
 
 const kamarSchema = new mongoose.Schema({
-  // Menimpa _id bawaan MongoDB menjadi tipe Number kustom
-  '_id': { 
-    type: Number, 
-    required: true 
-  }, // Contoh jadi pas insert data: 1001 (Lantai 1, kamar 01), 2015 (Lantai 2, kamar 15)
-  
-  'nama-kamar': { type: String, required: true, unique: true }, // Bisa diisi "Kamar 1001" atau "Mawar 1001"
+  '_id': { type: Number, required: true },
+  'nama-kamar': { type: String, required: true },
   'tipe-kamar': { 
     type: String, 
-    enum: ['ekonomi', 'eksekutif'], 
+    enum: ['teratai', 'tulip'],
     required: true 
   },
-  'harga': { type: Number, required: true },
-  'status': { 
-    type: String, 
+  'harga': { type: Number }, 
+  'status': { type: String,
     enum: ['kosong', 'dipesan', 'terisi', 'perbaikan'], 
-    default: 'kosong' 
-  },
-  'fasilitas': [{ type: String }],
-  'deskripsi': { type: String },
+    default: 'kosong' },
+  'lantai': { type: Number, required: true },
   'foto': [{ type: String }],
-  'lantai': { type: Number, required: true }, // Contoh: 1, 2, atau 3
-  'diarsipkan': { 
-    type: Boolean, 
-    default: false 
+  'diarsipkan': { type: Boolean, default: false }
+}, { timestamps: true });
+
+kamarSchema.pre('save', function() {
+  const tipe = this['tipe-kamar'].toLowerCase();
+  if (tipe === 'teratai' || tipe === 'ekonomi') {
+    this.harga = 300000;
+  } else if (tipe === 'tulip' || tipe === 'eksekutif') {
+    this.harga = 500000;
   }
-}, { 
-  timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
 });
 
 export default mongoose.model('Kamar', kamarSchema);

@@ -4,7 +4,11 @@ import cors from "cors";
 
 import routes from "./routes/index-route.js";
 import { verifyInternalKey } from "./middlewares/apikey-middleware.js";
+import { errorHandler } from "./middlewares/error-middleware.js";
 import { loggerSetup } from "./logger-setup.js";
+import { AppError } from "./errors.js";
+
+import "./utils/version-check.js";
 
 const app = express(); 
 
@@ -27,3 +31,9 @@ app.use("/api", verifyInternalKey, routes);
 export default app;
 
 // ini app js
+app.use((req, res, next) => {
+  next(new AppError("ROUTE_TIDAK_DITEMUKAN", "Rute tidak ditemukan."));
+});
+app.use(errorHandler);
+
+export default app;
