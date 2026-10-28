@@ -1,3 +1,8 @@
+export const kontrakAuth = {
+ email: "string (wajib) - alamat email yang valid dan terdaftar di sistem",
+  password: "string (wajib) - password valid yang terdaftar dan benar",
+};
+
 export const kontrakRequestOTP = {
   email: "string (wajib) - Alamat email valid yang sudah terdaftar di sistem",
 };
