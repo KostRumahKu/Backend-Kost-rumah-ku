@@ -1,4 +1,4 @@
-import * as penyewaService from "../services/penyewa-service.js";
+import * as penyewaService from "../../services/penyewa-services/penyewa-service";
 
 export const getDashboardPenyewa = async (req, res) => {
   const idPengguna = req.pengguna._id || req.pengguna.id;

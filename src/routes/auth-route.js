@@ -1,7 +1,6 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { requestLupaPassword, konfirmasiLupaPassword } from "../controllers/auth-controller.js";
-import * as authController from "../controllers/auth-controller.js";
+import * as authController from "../controllers/auth-controllers/auth-controller";
 
 const router = express.Router();
 
@@ -28,7 +27,7 @@ const konfirmasiLimiter = rateLimit({
 router.post("/pemilik/login", authController.loginPemilik);
 router.post("/admin/login", authController.loginAdmin);
 router.post("/penyewa/login", authController.loginPenyewa);
-router.post("/lupa-password", resetLimiter, requestLupaPassword);
-router.post("/lupa-password/konfirmasi", konfirmasiLimiter, konfirmasiLupaPassword);
+router.post("/lupa-password", resetLimiter, authController.requestLupaPassword);
+router.post("/lupa-password/konfirmasi", konfirmasiLimiter, authController.konfirmasiLupaPassword);
 
 export default router;

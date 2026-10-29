@@ -1,6 +1,6 @@
-import * as authService from "../services/auth-service.js";
-import { AppError } from "../errors.js";
-import { kontrakAuth, kontrakRequestOTP, kontrakKonfirmasiOTP } from "../contracts/auth-contract.js";
+import * as authService from "../../services/auth-service.js";
+import { AppError } from "../../errors.js";
+import { kontrakAuth, kontrakRequestOTP, kontrakKonfirmasiOTP } from "../../contracts/auth-contract.js";
 
 // Fungsi pembungkus untuk menangani login berdasarkan peran
 const loginBerdasarkanPeran = (peran) => async (req, res) => {

@@ -1,8 +1,8 @@
-import Pengguna from "../models/pengguna-model.js";
-import Kamar from "../models/kamar-model.js";
-import { AppError } from "../errors.js";
-import Tagihan from "../models/tagihan-model.js";
-import Pengumuman from "../models/pengumuman-model.js";
+import Pengguna from "../../models/pengguna-model.js";
+import Kamar from "../../models/kamar-model.js";
+import { AppError } from "../../errors.js";
+import Tagihan from "../../models/tagihan-model.js";
+import Pengumuman from "../../models/pengumuman-model.js";
 
 export const ambilProfilDashboard = async (idPengguna) => {
   const profil = await Pengguna.findById(idPengguna)

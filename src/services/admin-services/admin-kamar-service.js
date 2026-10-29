@@ -1,17 +1,17 @@
-import Kamar from "../models/kamar-model.js";
-import Pengguna from "../models/pengguna-model.js";
-import RiwayatSewa from "../models/riwayat-sewa-model.js";
-import Pemesanan from "../models/pemesanan-model.js";
-import Tagihan from "../models/tagihan-model.js";
-import Pembayaran from "../models/pembayaran-model.js";
+import Kamar from "../../models/kamar-model.js";
+import Pengguna from "../../models/pengguna-model.js";
+import RiwayatSewa from "../../models/riwayat-sewa-model.js";
+import Pemesanan from "../../models/pemesanan-model.js";
+import Tagihan from "../../models/tagihan-model.js";
+import Pembayaran from "../../models/pembayaran-model.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { kirimEmail } from "../utils/mail-service.js";
-import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../utils/email-templates.js";
+import { kirimEmail } from "../../utils/mail-service.js";
+import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../../utils/email-templates.js";
 
 
-import { generateIdPengguna } from "./pengguna-service.js";
-import { AppError } from "../errors.js";
+import { generateIdPengguna } from "../penyewa-services/pengguna-service.js";
+import { AppError } from "../../errors.js";
 // ============== Fungsi Service untuk Admin/Pemilik ==============
 // ============= FUNGSI MMEBUAT KAMAR BARU ==============
 export const tambahKamarBaru = async (dataKamar) => {

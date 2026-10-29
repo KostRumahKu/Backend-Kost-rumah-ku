@@ -1,4 +1,4 @@
-import Pengguna from "../models/pengguna-model.js";
+import Pengguna from "../../models/pengguna-model.js";
 
 export const generateIdPengguna = async (tanggalMasuk = new Date()) => {
   const waktu = new Date(tanggalMasuk);

@@ -1,6 +1,6 @@
-import * as pengumumanService from "../services/admin-pengumuman-service.js";
-import { AppError } from "../errors.js";
-import { kontrakKirimPengumuman } from "../contracts/admin-pengumuman-contact.js";
+import * as pengumumanService from "../../services/admin-services/admin-pengumuman-service.js";
+import { AppError } from "../../errors.js";
+import { kontrakKirimPengumuman } from "../../contracts/admin-pengumuman-contract.js";
 
 export const broadcastPengumuman = async (req, res) => {
   const dataPayload = req.body;

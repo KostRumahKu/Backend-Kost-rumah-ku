@@ -1,7 +1,7 @@
-import Pengumuman from "../models/pengumuman-model.js";
-import Pengguna from "../models/pengguna-model.js";
-import { kirimEmail } from "../utils/mail-service.js";
-import { templatePengumuman } from "../utils/email-templates.js";
+import Pengumuman from "../../models/pengumuman-model.js";
+import Pengguna from "../../models/pengguna-model.js";
+import { kirimEmail } from "../../utils/mail-service.js";
+import { templatePengumuman } from "../../utils/email-templates.js";
 
 export const buatBroadcastPengumuman = async (dataPengumuman, idAdmin) => {
   const pengumumanBaru = new Pengumuman({

@@ -1,4 +1,4 @@
-import * as dashboardService from "../services/admin-dashboard-service.js";
+import * as dashboardService from "../../services/admin-services/admin-dashboard-service.js";
 
 export const getDashboardAdmin = async (req, res) => {
   const dataDashboard = await dashboardService.ambilDataDashboard(req.query);
