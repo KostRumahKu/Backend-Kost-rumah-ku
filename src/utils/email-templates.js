@@ -129,3 +129,59 @@ export const templateOTP = (nama, otp) => {
   `;
   return baseHtml(konten);
 };
+
+export const templateTagihanBaru = (
+  nama,
+  nomorInvoice,
+  bulanTagihan,
+  totalHarga,
+  tanggalJatuhTempo,
+) => {
+  const hargaRupiah = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(totalHarga);
+  const tglFormatted = new Date(tanggalJatuhTempo).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const konten = `
+    <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}! 📄</h3>
+    <p>Tagihan sewa kost Anda untuk periode <b>${bulanTagihan}</b> telah diterbitkan.</p>
+    
+    <div style="background-color: #f9fafb; border-left: 4px solid #2563eb; padding: 16px; margin: 24px 0; border-radius: 4px;">
+      <p style="margin: 0 0 8px 0; color: #4b5563;"><b>Nomor Tagihan:</b> ${nomorInvoice}</p>
+      <p style="margin: 0 0 8px 0; color: #4b5563;"><b>Total Tagihan:</b> ${hargaRupiah}</p>
+      <p style="margin: 0; color: #ef4444;"><b>Batas Pembayaran:</b> ${tglFormatted}</p>
+    </div>
+    
+    <p>Silakan melakukan pembayaran dan upload bukti transfer melalui aplikasi KostRumahKu sebelum tanggal jatuh tempo.</p>
+    <p style="margin-top: 24px;">Terima kasih,<br><b>Admin Kost RumahKu</b></p>
+  `;
+  return baseHtml(konten);
+};
+
+export const templatePengumuman = (judul, pesan, gambarUrl) => {
+  const tagGambar = gambarUrl 
+    ? `<div style="text-align: center; margin-bottom: 20px;">
+         <img src="${gambarUrl}" alt="Gambar Pengumuman" style="max-width: 100%; height: auto; border-radius: 8px;" />
+       </div>` 
+    : '';
+
+  const pesanFormat = pesan.replace(/\n/g, '<br>');
+
+  const konten = `
+    <h3 style="color: #111827; margin-top: 0;">📢 ${judul}</h3>
+    ${tagGambar}
+    <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; color: #374151; line-height: 1.6;">
+      ${pesanFormat}
+    </div>
+    <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">
+      Pesan broadcast ini dikirimkan secara otomatis oleh sistem KostRumahKu.
+    </p>
+  `;
+  return baseHtml(konten);
+};

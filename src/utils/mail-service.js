@@ -1,11 +1,6 @@
 import { Resend } from "resend";
 import { AppError } from "../errors.js";
 
-if (!process.env.RESEND_API_KEY || !process.env.SENDER_EMAIL) {
-  console.log("RESEND_API_KEY=Belum ada");
-  console.log("SENDER_EMAIL=Belum ada");
-}
-
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 
