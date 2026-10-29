@@ -1,5 +1,5 @@
 import Kamar from "../models/kamar-model.js";
-import Pengguna from "../models/pengguna-model.js.js";
+import Pengguna from "../models/pengguna-model.js";
 import RiwayatSewa from "../models/riwayat-sewa-model.js";
 import Pemesanan from "../models/pemesanan-model.js";
 import Tagihan from "../models/tagihan-model.js";
