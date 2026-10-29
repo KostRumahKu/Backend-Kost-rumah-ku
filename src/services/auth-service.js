@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import Pengguna from "../models/pengguna-model.js.js";
+import Pengguna from "../models/pengguna-model.js";
 import { AppError } from "../errors.js";
 import crypto from "crypto";
 import { kirimEmail } from "../utils/mail-service.js";

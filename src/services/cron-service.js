@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import Pengguna from "../models/pengguna-model.js.js";
+import Pengguna from "../models/pengguna-model.js";
 import Kamar from "../models/kamar-model.js";
 import Tagihan from "../models/tagihan-model.js";
 import { kirimEmail } from "../utils/mail-service.js";
