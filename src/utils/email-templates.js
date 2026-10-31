@@ -165,13 +165,13 @@ export const templateTagihanBaru = (
 };
 
 export const templatePengumuman = (judul, pesan, gambarUrl) => {
-  const tagGambar = gambarUrl 
+  const tagGambar = gambarUrl
     ? `<div style="text-align: center; margin-bottom: 20px;">
          <img src="${gambarUrl}" alt="Gambar Pengumuman" style="max-width: 100%; height: auto; border-radius: 8px;" />
-       </div>` 
-    : '';
+       </div>`
+    : "";
 
-  const pesanFormat = pesan.replace(/\n/g, '<br>');
+  const pesanFormat = pesan.replace(/\n/g, "<br>");
 
   const konten = `
     <h3 style="color: #111827; margin-top: 0;">📢 ${judul}</h3>
@@ -182,6 +182,22 @@ export const templatePengumuman = (judul, pesan, gambarUrl) => {
     <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">
       Pesan broadcast ini dikirimkan secara otomatis oleh sistem KostRumahKu.
     </p>
+  `;
+  return baseHtml(konten);
+};
+
+export const templateOtpGantiEmail = (nama, otp) => {
+  const konten = `
+    <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}!</h3>
+    <p>Anda menerima email ini karena ada permintaan untuk mengubah alamat email pada akun KostRumahKu Anda.</p>
+    
+    <div style="background-color: #f3f4f6; text-align: center; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; color: #4b5563; font-size: 14px;">Kode OTP Verifikasi Email Baru:</p>
+      <h1 style="margin: 0; color: #2563eb; letter-spacing: 4px; font-size: 32px;">${otp}</h1>
+    </div>
+    
+    <p style="color: #ef4444; font-size: 14px; margin-bottom: 0;"><b>Perhatian:</b> Kode ini hanya berlaku selama 5 menit.</p>
+    <p style="color: #6b7280; font-size: 12px; margin-top: 4px;">Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini.</p>
   `;
   return baseHtml(konten);
 };
