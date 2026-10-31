@@ -1,10 +1,10 @@
 import express from "express";
 import authRoutes from "./auth-route.js";
-import kamarRoutes from "./admin-kamar-route.js";
-import { getKamarPublikData } from "../controllers/public-controller.js";
-import penyewaRoute from "./penyewa-route.js";
-import adminDashboardRoute from "./admin-dashboard-route.js";
-import adminPengumumanRoute from "./admin-pengumuman-route.js"
+import kamarRoutes from "./admin-routes/admin-kamar-route.js";
+import { getKamarPublikData } from "../controllers/public-controllers/public-controller.js";
+import penyewaRoute from "./penyewa-routes/penyewa-route.js";
+import adminDashboardRoute from "./admin-routes/admin-dashboard-route.js";
+import adminPengumumanRoute from "./admin-routes/admin-pengumuman-route.js"
 
 // import pemilikRoutes from "./pemilik.route.js";
 // import pelangganRoutes from "./pelanggan.route.js";

@@ -1,6 +1,6 @@
 import express from "express";
-import { broadcastPengumuman, lihatRiwayatPengumuman } from "../controllers/admin-pengumuman-controller.js";
-import { verifikasiToken, otorisasiPeran } from "../middlewares/auth-middleware.js";
+import { broadcastPengumuman, lihatRiwayatPengumuman } from "../../controllers/admin-controllers/admin-pengumuman-controller.js";
+import { verifikasiToken, otorisasiPeran } from "../../middlewares/auth-middleware.js";
 
 const router = express.Router();
 

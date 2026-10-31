@@ -1,4 +1,4 @@
-import { Pemilik } from "../models/pemilik.model";
+import { Pemilik } from "../../models/pemilik.model";
 
 export const getAllPemilik = async () => {
   return await Pemilik.find();

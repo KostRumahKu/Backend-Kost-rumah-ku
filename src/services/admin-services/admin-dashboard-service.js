@@ -1,5 +1,5 @@
-import Kamar from "../models/kamar-model.js";
-import Tagihan from "../models/tagihan-model.js";
+import Kamar from "../../models/kamar-model.js";
+import Tagihan from "../../models/tagihan-model.js";
 
 export const ambilDataDashboard = async (query = {}) => {
   const hariIni = new Date();

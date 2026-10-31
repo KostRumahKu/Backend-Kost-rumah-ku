@@ -1,6 +1,6 @@
 import express from "express";
-import { getDashboardAdmin } from "../controllers/admin-dashboard-controller.js";
-import { verifikasiToken, otorisasiPeran } from "../middlewares/auth-middleware.js";
+import { getDashboardAdmin } from "../../controllers/admin-controllers/admin-dashboard-controller.js";
+import { verifikasiToken, otorisasiPeran } from "../../middlewares/auth-middleware.js";
 
 const router = express.Router();
 
