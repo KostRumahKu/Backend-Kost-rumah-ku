@@ -6,6 +6,7 @@ import Pengumuman from "../../models/pengumuman-model.js";
 import { kirimEmail } from "../../utils/mail-service.js";
 import { templateOtpGantiEmail } from "../../utils/email-templates.js";
 import crypto from "node:crypto";
+import bcrypt from "bcrypt";
 
 export const ambilProfilDashboard = async (idPengguna) => {
   const profil = await Pengguna.findById(idPengguna)
@@ -188,4 +189,33 @@ export const verifikasiOtpGantiEmail = async (idPengguna, emailBaru, otpInput) =
   await pengguna.save();
 
   return pengguna.email;
+};
+
+export const gantiPasswordPenyewa = async (idPengguna, passwordLama, passwordBaru) => {
+
+  const pengguna = await Pengguna.findById(idPengguna).select("+kata-sandi");
+  if (!pengguna) throw new AppError("NOT_FOUND", "Pengguna tidak ditemukan.");
+  
+  if (!pengguna["kata-sandi"]) {
+    throw new AppError("BAD_REQUEST", "Akun ini tidak memiliki password yang tersimpan di database.");
+  }
+
+  const isMatch = await bcrypt.compare(passwordLama, pengguna["kata-sandi"]);
+  
+  if (!isMatch) {
+    throw new AppError(
+      "BAD_REQUEST", 
+      "Password saat ini salah. Jika Anda lupa, silakan logout dan gunakan fitur Lupa Password."
+    );
+  }
+
+  if (passwordLama === passwordBaru) {
+    throw new AppError("BAD_REQUEST", "Password baru tidak boleh sama dengan password saat ini.");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(passwordBaru, salt);
+
+  pengguna["kata-sandi"] = hashedPassword;
+  await pengguna.save();
 };

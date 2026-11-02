@@ -7,6 +7,7 @@ import {
   hapusFotoProfil,
   requestOtpEmail,
   verifikasiOtpEmail,
+  updatePasswordPenyewa,
 } from "../../controllers/penyewa-controllers/penyewa-controller.js";
 import { verifikasiToken, otorisasiPeran } from "../../middlewares/auth-middleware.js";
 
@@ -21,6 +22,7 @@ router.put("/profil", updateProfilPenyewa);
 router.delete("/profil/foto", hapusFotoProfil);
 router.post("/profil/email/request-otp", requestOtpEmail);
 router.post("/profil/email/verify-otp", verifikasiOtpEmail);
+router.put("/profil/ganti-password", updatePasswordPenyewa);
 
 
 export default router;

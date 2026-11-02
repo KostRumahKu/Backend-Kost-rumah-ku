@@ -1,5 +1,5 @@
 import * as penyewaService from "../../services/penyewa-services/penyewa-service";
-import { kontrakPenyewaUpdateProfil, kontrakPenyewaMintaGantiEmail, kontrakPenyewaKonfirmasiEmailDanaOtp } from "../../contracts/penyewa-contract"
+import { kontrakPenyewaUpdateProfil, kontrakPenyewaMintaGantiEmail, kontrakPenyewaKonfirmasiEmailDanaOtp, kontrakPenyewaGantiPassword } from "../../contracts/penyewa-contract"
 import { AppError } from "../../errors.js";
 
 
@@ -114,5 +114,30 @@ export const verifikasiOtpEmail = async (req, res) => {
     status: "sukses",
     pesan: "Email berhasil diubah.",
     data: { email: emailUpdate }
+  });
+};
+
+export const updatePasswordPenyewa = async (req, res) => {
+  
+  const idPengguna = req.pengguna._id || req.pengguna.id;
+  
+  const { 
+    "password-lama": passwordLama, 
+    "password-baru": passwordBaru 
+  } = req.body || {};
+
+  if (!passwordLama || !passwordBaru) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Password lama dan password baru wajib diisi.",
+      { kebutuhan_payload: kontrakPenyewaGantiPassword },
+    );
+  }
+
+  await penyewaService.gantiPasswordPenyewa(idPengguna, passwordLama, passwordBaru);
+
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Password berhasil diperbarui. Silakan gunakan password baru Anda untuk login selanjutnya."
   });
 };
