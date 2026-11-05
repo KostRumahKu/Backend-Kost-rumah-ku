@@ -201,3 +201,161 @@ export const templateOtpGantiEmail = (nama, otp) => {
   `;
   return baseHtml(konten);
 };
+
+export const templateNotifikasiKeluarAdmin = (
+  namaPenyewa,
+  kamarSekarang,
+  tanggalTarget,
+  urlDashboard,
+) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #2c3e50;">Peringatan Hari-H Check-out Penyewa</h2>
+      <p>Halo Admin KostRumahKu,</p>
+      <p>Hari ini adalah jadwal check-out untuk penyewa berikut:</p>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;"><strong>Nama Penyewa</strong></td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${namaPenyewa}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;"><strong>Kamar</strong></td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${kamarSekarang}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;"><strong>Tanggal Check-out</strong></td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${tanggalTarget}</td>
+        </tr>
+      </table>
+      <p style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #f39c12;">
+        <strong>Tindakan yang Diperlukan:</strong><br/>
+        Mohon pastikan serah terima kunci fisik dilakukan hari ini. Setelah penyewa benar-benar keluar, jangan lupa menekan tombol <b>"Selesaikan Check-out"</b> pada dashboard Anda untuk mengubah status kamar menjadi KOSONG.
+      </p>
+      <div style="margin-top: 30px;">
+        <a href="${urlDashboard}" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Buka Dashboard Admin</a>
+      </div>
+    </div>
+  `;
+};
+
+export const templatePengajuanDibuat = (namaPenyewa, jenisPengajuan, tanggalTarget) => {
+  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa (Check-out)" : "Pindah Kamar";
+  
+  const tglFormat = new Date(tanggalTarget).toLocaleDateString("id-ID", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: #2c3e50;">Pengajuan Anda Sedang Diproses</h2>
+      <p>Halo <strong>${namaPenyewa}</strong>,</p>
+      <p>Kami telah menerima permohonan <strong>${jenisTeks}</strong> yang Anda ajukan melalui sistem KostRumahKu.</p>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0;"><strong>Rincian Pengajuan:</strong></p>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li><strong>Jenis:</strong> ${jenisTeks}</li>
+          <li><strong>Tanggal Target:</strong> ${tglFormat}</li>
+          <li><strong>Status Saat Ini:</strong> Menunggu Konfirmasi Admin</li>
+        </ul>
+      </div>
+
+      <p>Admin kami akan segera meninjau pengajuan ini. Anda akan menerima email pemberitahuan lebih lanjut apabila pengajuan ini telah disetujui atau ditolak.</p>
+      <p>Jika Anda merasa tidak melakukan pengajuan ini atau ingin membatalkannya, segera masuk ke dashboard akun Anda.</p>
+      
+      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+    </div>
+  `;
+};
+
+export const templatePembatalanOlehPenyewa = (namaPenyewa, jenisPengajuan) => {
+  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+  
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: #e74c3c;">Pembatalan Pengajuan Berhasil</h2>
+      <p>Halo <strong>${namaPenyewa}</strong>,</p>
+      <p>Sesuai permintaan Anda, sistem telah membatalkan pengajuan <strong>${jenisTeks}</strong> Anda yang sebelumnya berstatus Menunggu Konfirmasi.</p>
+      <p>Anda saat ini tidak memiliki pengajuan aktif. Jika Anda berubah pikiran di kemudian hari, Anda dapat membuat pengajuan baru melalui dashboard akun Anda.</p>
+      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+    </div>
+  `;
+};
+
+// --- TEMPLAT UNTUK ADMIN ---
+export const templateNotifikasiBatalKeAdmin = (namaPenyewa, kamarSekarang, jenisPengajuan) => {
+  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+  
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: #f39c12;">Informasi Pembatalan Pengajuan</h2>
+      <p>Halo Admin,</p>
+      <p>Penyewa berikut telah <strong>membatalkan</strong> pengajuan mereka secara mandiri:</p>
+      <ul>
+        <li><strong>Nama Penyewa:</strong> ${namaPenyewa}</li>
+        <li><strong>Kamar:</strong> ${kamarSekarang}</li>
+        <li><strong>Jenis Pengajuan:</strong> ${jenisTeks}</li>
+      </ul>
+      <p>Pengajuan ini sudah ditarik dari antrean "Menunggu Konfirmasi" Anda, sehingga Anda <strong>tidak perlu lagi memprosesnya</strong>.</p>
+    </div>
+  `;
+};
+
+
+export const templateHasilPengajuan = (namaPenyewa, jenisPengajuan, status, catatanAdmin, tanggalTarget) => {
+  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+  
+  const warnaHeader = status === "disetujui" ? "#27ae60" : "#e74c3c";
+  const teksStatus = status === "disetujui" ? "DISETUJUI" : "DITOLAK";
+  
+  const tglFormat = new Date(tanggalTarget).toLocaleDateString("id-ID", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: ${warnaHeader};">Pengajuan Anda ${teksStatus}</h2>
+      <p>Halo <strong>${namaPenyewa}</strong>,</p>
+      <p>Admin telah selesai meninjau pengajuan <strong>${jenisTeks}</strong> yang Anda minta untuk tanggal ${tglFormat}.</p>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid ${warnaHeader}; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0;"><strong>Hasil Tinjauan Admin:</strong></p>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li><strong>Status Akhir:</strong> <span style="color: ${warnaHeader}; font-weight: bold;">${teksStatus}</span></li>
+          <li><strong>Catatan Admin:</strong> ${catatanAdmin || "<em>Tidak ada catatan tambahan.</em>"}</li>
+        </ul>
+      </div>
+
+      ${status === "disetujui" && jenisPengajuan === "berhenti-sewa" 
+        ? `<p>Karena pengajuan disetujui, mohon bersiap untuk menyerahkan kunci kamar Anda pada tanggal <strong>${tglFormat}</strong>.</p>` 
+        : ""}
+      
+      ${status === "ditolak" 
+        ? `<p>Jika Anda memiliki pertanyaan lebih lanjut mengenai alasan penolakan, silakan hubungi Admin secara langsung.</p>` 
+        : ""}
+      
+      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+    </div>
+  `;
+};
+
+export const templateRollbackPersetujuan = (namaPenyewa, jenisPengajuan, catatanAdmin) => {
+  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+  
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: #8e44ad;">Persetujuan Pengajuan Dibatalkan</h2>
+      <p>Halo <strong>${namaPenyewa}</strong>,</p>
+      <p>Menginformasikan bahwa Admin telah membatalkan persetujuan untuk pengajuan <strong>${jenisTeks}</strong> Anda sebelumnya.</p>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #8e44ad; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0;"><strong>Catatan dari Admin:</strong></p>
+        <p style="margin: 0; font-style: italic;">"${catatanAdmin || 'Penyewa batal keluar, masa sewa diperpanjang.'}"</p>
+      </div>
+
+      <p>Dengan pembatalan ini, status kamar dan kewajiban tagihan bulanan Anda akan dikembalikan seperti semula (aktif). Harap periksa kembali menu Tagihan di dashboard Anda jika sebelumnya ada tagihan yang sempat dibatalkan.</p>
+      
+      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+    </div>
+  `;
+};

@@ -2,8 +2,9 @@ import cron from "node-cron";
 import Pengguna from "../models/pengguna-model.js";
 import Kamar from "../models/kamar-model.js";
 import Tagihan from "../models/tagihan-model.js";
+import Pengajuan from "../models/pengajuan-model.js";
 import { kirimEmail } from "../utils/mail-service.js";
-import { templateTagihanBaru } from "../utils/email-templates.js";
+import { templateTagihanBaru, templateNotifikasiKeluarAdmin } from "../utils/email-templates.js";
 
 // ===== H-10 =====
 export const generateTagihanBulanan = async () => {
@@ -96,6 +97,51 @@ export const kirimPengingatTagihan = async (tipePengingat) => {
   }
 };
 
+export const notifikasiCheckoutAdmin = async () => {
+  console.log("[CRON] Mengecek jadwal check-out penyewa hari ini...");
+  try {
+    const hariIniAwal = new Date();
+    hariIniAwal.setHours(0, 0, 0, 0);
+    
+    const hariIniAkhir = new Date();
+    hariIniAkhir.setHours(23, 59, 59, 999);
+
+    const daftarKeluarHariIni = await Pengajuan.find({
+      "jenis-pengajuan": "berhenti-sewa",
+      status: "disetujui",
+      "tanggal-target": {
+        $gte: hariIniAwal,
+        $lte: hariIniAkhir
+      }
+    }).populate("id-pengguna", "nama-lengkap");
+
+    if (daftarKeluarHariIni.length > 0) {
+      const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com"; // Sesuaikan .env
+      const urlDashboard = process.env.ADMIN_DASHBOARD_URL || "http://localhost:5173/admin/pengajuan";
+
+      for (const pengajuan of daftarKeluarHariIni) {
+        const namaPenyewa = pengajuan["id-pengguna"]["nama-lengkap"];
+        const kamar = pengajuan["id-kamar-sekarang"];
+        const tglFormat = new Date(pengajuan["tanggal-target"]).toLocaleDateString("id-ID", {
+          day: "numeric", month: "long", year: "numeric"
+        });
+
+        await kirimEmail({
+          to: emailAdmin,
+          subject: `[PENTING] Jadwal Check-out Hari Ini: Kamar ${kamar}`,
+          html: templateNotifikasiKeluarAdmin(namaPenyewa, kamar, tglFormat, urlDashboard)
+        });
+        
+        console.log(`✅ [CRON] Email notifikasi check-out kamar ${kamar} terkirim ke Admin.`);
+      }
+    } else {
+      console.log("[CRON] Tidak ada jadwal check-out untuk hari ini.");
+    }
+  } catch (error) {
+    console.error("[CRON ERROR] Gagal menjalankan pengecekan hari-H check-out:", error);
+  }
+};
+
 // ==== JADWAL CRON JOB (08:00 WIB) ====
 export const inisialisasiCronJob = () => {
   // Tanggal 23 Jam 08:00 Pagi -> Generate Tagihan Bulan Depan (H-10)
@@ -109,6 +155,9 @@ export const inisialisasiCronJob = () => {
 
   // Tanggal 3 Jam 08:00 Pagi -> Pengingat Keterlambatan (H+1)
   cron.schedule("0 8 3 * *", () => kirimPengingatTagihan("LATE"));
+
+  // Jam 07:00 Pagi -> Notifikasi Check-out ke Admin
+  cron.schedule("0 7 * * *", () => notifikasiCheckoutAdmin());
 
   console.log("semua jadwal cron job berhasil dijalankan!");
 };

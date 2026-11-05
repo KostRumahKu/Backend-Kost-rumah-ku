@@ -19,3 +19,9 @@ export const kontrakPenyewaGantiPassword = {
   "password-lama": "string (wajib, password lama yang digunakan untuk login)",
   "password-baru": "string (wajib, password baru yang akan digunakan untuk login)"
 }
+
+export const kontrakPenyewaBuatPengajuan = {
+  "jenis-pengajuan": "string (wajib, jenis pengajuan: berhenti-sewa atau pindah-kamar)",
+  "tanggal-target": "string (wajib, tanggal target pengajuan dalam format YYYY-MM-DD)",
+  "alasan": "string (wajib, alasan pengajuan)"
+}
