@@ -22,9 +22,10 @@ const penggunaSchema = new mongoose.Schema({
   'tanggal-berakhir': { type: Date },
   'otp-reset': { type: String, default: null },
   'otp-kedaluwarsa': { type: Date, default: null },
+  'email-baru-sementara': { type: String, default: null },
   'foto-profil': { 
     type: String, 
-    default: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg" 
+    default: "https://uploader.danafxc.my.id/images/8c67c844-421b-470a-aa42-476429f8cce2.png" 
   },
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 

@@ -5,9 +5,7 @@ import { getKamarPublikData } from "../controllers/public-controllers/public-con
 import penyewaRoute from "./penyewa-routes/penyewa-route.js";
 import adminDashboardRoute from "./admin-routes/admin-dashboard-route.js";
 import adminPengumumanRoute from "./admin-routes/admin-pengumuman-route.js"
-
-// import pemilikRoutes from "./pemilik.route.js";
-// import pelangganRoutes from "./pelanggan.route.js";
+import adminPengajuanRoute from "./admin-routes/admin-pengajuan-route.js";
 
 const router = express.Router();
 
@@ -17,5 +15,6 @@ router.get("/public/data-kamar", getKamarPublikData);
 router.use("/penyewa", penyewaRoute);
 router.use("/admin/dashboard", adminDashboardRoute);
 router.use("/admin/pengumuman", adminPengumumanRoute);
+router.use("/admin/pengajuan", adminPengajuanRoute);
 
 export default router;
