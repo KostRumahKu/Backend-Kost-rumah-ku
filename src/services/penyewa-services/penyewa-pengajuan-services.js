@@ -8,6 +8,7 @@ import {
   templatePembatalanOlehPenyewa, 
   templateNotifikasiBatalKeAdmin,
 } from "../../utils/email-templates.js";
+import Kamar from "../../models/kamar-model.js"; 
 
 export const getRiwayatPengajuan = async (idPengguna) => {
   const riwayat = await Pengajuan.find({ "id-pengguna": idPengguna }).sort({
@@ -45,6 +46,11 @@ export const buatPengajuan = async (idPengguna, payload) => {
 
   const tanggalTargetClean = new Date(tanggalTarget);
   tanggalTargetClean.setHours(0, 0, 0, 0);
+
+  /* ini awal nya buat ngecek h-14 itu hari minimal peneywa buat bikin pengajuan
+  jadi kalau misal nya sekarang tanggal 3 itu kalau h-14 berarti minimal tanggal 17
+  pengajuan nya boleh di buat, nanti tanya auvia mau gimana buat pengajuan nya */
+  
   const selisihWaktu = tanggalTargetClean.getTime() - tanggalHariIni.getTime();
   const selisihHari = Math.round(selisihWaktu / (1000 * 3600 * 24));
 
@@ -74,6 +80,31 @@ export const buatPengajuan = async (idPengguna, payload) => {
     throw new AppError("BAD_REQUEST", "Anda masih memiliki pengajuan aktif. Harap tunggu proses selesai atau batalkan pengajuan sebelumnya.");
   }
 
+  const jenisPengajuan = payload["jenis-pengajuan"];
+  let idKamarTujuan = null;
+
+  if (jenisPengajuan === "pindah-kamar") {
+    idKamarTujuan = payload["id-kamar-tujuan"];
+    
+    if (!idKamarTujuan) {
+      throw new AppError("BAD_REQUEST", "ID Kamar Tujuan wajib diisi untuk pengajuan Pindah Kamar.");
+    }
+    
+    if (idKamarTujuan === pengguna["id-kamar"]) {
+      throw new AppError("BAD_REQUEST", "Kamar tujuan tidak boleh sama dengan kamar Anda saat ini.");
+    }
+
+    const kamarTujuanDb = await Kamar.findById(idKamarTujuan);
+    
+    if (!kamarTujuanDb) {
+      throw new AppError("NOT_FOUND", `Kamar tujuan dengan ID ${idKamarTujuan} tidak ditemukan.`);
+    }
+
+    if (kamarTujuanDb.status !== "kosong") {
+      throw new AppError("BAD_REQUEST", `Kamar ${kamarTujuanDb['id-kamar'] || kamarTujuanDb._id} saat ini berstatus '${kamarTujuanDb.status}' dan tidak dapat dipilih.`);
+    }
+  }
+
   const sekarang = new Date();
   const yyyy = sekarang.getFullYear();
   const mm = String(sekarang.getMonth() + 1).padStart(2, "0");
@@ -90,22 +121,23 @@ export const buatPengajuan = async (idPengguna, payload) => {
   const pengajuanBaru = new Pengajuan({
     _id: customId, 
     "id-pengguna": idPengguna,
-    "jenis-pengajuan": payload["jenis-pengajuan"],
+    "jenis-pengajuan": jenisPengajuan,
     "id-kamar-sekarang": pengguna["id-kamar"],
+    "id-kamar-tujuan": idKamarTujuan, 
     "tanggal-target": payload["tanggal-target"],
     alasan: payload.alasan,
   });
 
   await pengajuanBaru.save();
 
-  const subjectEmail = `[Menunggu Konfirmasi] Pengajuan ${payload["jenis-pengajuan"] === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar"}`;
+  const subjectEmail = `[Menunggu Konfirmasi] Pengajuan ${jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar"}`;
   
   kirimEmail({
     to: pengguna.email,
     subject: subjectEmail,
     html: templatePengajuanDibuat(
       pengguna["nama-lengkap"], 
-      payload["jenis-pengajuan"], 
+      jenisPengajuan, 
       payload["tanggal-target"]
     )
   }).catch(err => console.error(`[MAIL ERROR] Gagal mengirim email pengajuan ke ${pengguna.email}:`, err.message));

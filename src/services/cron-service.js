@@ -97,8 +97,8 @@ export const kirimPengingatTagihan = async (tipePengingat) => {
   }
 };
 
-export const notifikasiCheckoutAdmin = async () => {
-  console.log("[CRON] Mengecek jadwal check-out penyewa hari ini...");
+export const notifikasiEksekusiHariIniAdmin = async () => {
+  console.log("[CRON] Mengecek jadwal eksekusi pengajuan (Check-out/Pindah) hari ini...");
   try {
     const hariIniAwal = new Date();
     hariIniAwal.setHours(0, 0, 0, 0);
@@ -106,8 +106,8 @@ export const notifikasiCheckoutAdmin = async () => {
     const hariIniAkhir = new Date();
     hariIniAkhir.setHours(23, 59, 59, 999);
 
-    const daftarKeluarHariIni = await Pengajuan.find({
-      "jenis-pengajuan": "berhenti-sewa",
+    const daftarEksekusiHariIni = await Pengajuan.find({
+      "jenis-pengajuan": { $in: ["berhenti-sewa", "pindah-kamar"] },
       status: "disetujui",
       "tanggal-target": {
         $gte: hariIniAwal,
@@ -115,30 +115,37 @@ export const notifikasiCheckoutAdmin = async () => {
       }
     }).populate("id-pengguna", "nama-lengkap");
 
-    if (daftarKeluarHariIni.length > 0) {
-      const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com"; // Sesuaikan .env
+    if (daftarEksekusiHariIni.length > 0) {
+      const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
       const urlDashboard = process.env.ADMIN_DASHBOARD_URL || "http://localhost:5173/admin/pengajuan";
 
-      for (const pengajuan of daftarKeluarHariIni) {
+      for (const pengajuan of daftarEksekusiHariIni) {
         const namaPenyewa = pengajuan["id-pengguna"]["nama-lengkap"];
-        const kamar = pengajuan["id-kamar-sekarang"];
+        const jenis = pengajuan["jenis-pengajuan"];
+        const kamarLama = pengajuan["id-kamar-sekarang"];
+        const kamarBaru = pengajuan["id-kamar-tujuan"]; 
+        
         const tglFormat = new Date(pengajuan["tanggal-target"]).toLocaleDateString("id-ID", {
           day: "numeric", month: "long", year: "numeric"
         });
 
+        const subjekEmail = jenis === "berhenti-sewa" 
+          ? `[PENTING] Jadwal Check-out Hari Ini: Kamar ${kamarLama}`
+          : `[PENTING] Jadwal Pindah Kamar Hari Ini: ${kamarLama} -> ${kamarBaru}`;
+
         await kirimEmail({
           to: emailAdmin,
-          subject: `[PENTING] Jadwal Check-out Hari Ini: Kamar ${kamar}`,
-          html: templateNotifikasiKeluarAdmin(namaPenyewa, kamar, tglFormat, urlDashboard)
+          subject: subjekEmail,
+          html: templateNotifikasiKeluarAdmin(namaPenyewa, kamarLama, kamarBaru, jenis, tglFormat, urlDashboard)
         });
         
-        console.log(`✅ [CRON] Email notifikasi check-out kamar ${kamar} terkirim ke Admin.`);
+        console.log(`✅ [CRON] Email notifikasi eksekusi kamar ${kamarLama} terkirim ke Admin.`);
       }
     } else {
-      console.log("[CRON] Tidak ada jadwal check-out untuk hari ini.");
+      console.log("[CRON] Tidak ada jadwal check-out atau pindah kamar untuk hari ini.");
     }
   } catch (error) {
-    console.error("[CRON ERROR] Gagal menjalankan pengecekan hari-H check-out:", error);
+    console.error("[CRON ERROR] Gagal menjalankan pengecekan hari-H eksekusi:", error);
   }
 };
 

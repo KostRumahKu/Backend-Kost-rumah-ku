@@ -37,6 +37,7 @@ const pengajuanSchema = new mongoose.Schema(
         "ditolak",
         "dibatalkan-admin",
         "dibatalkan-penyewa",
+        "selesai",
       ],
       default: "menunggu-konfirmasi",
     },

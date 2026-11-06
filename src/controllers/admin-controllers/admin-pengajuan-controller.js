@@ -76,3 +76,15 @@ export const rollbackPersetujuan = async (req, res) => {
     data: hasil
   });
 };
+
+export const selesaikanPengajuan = async (req, res) => {
+  const { idPengajuan } = req.params;
+
+  const hasilEksekusi = await adminPengajuanService.selesaikanPengajuan(idPengajuan);
+
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Eksekusi pengajuan berhasil diselesaikan. Database kamar dan tagihan telah diperbarui.",
+    data: hasilEksekusi
+  });
+};

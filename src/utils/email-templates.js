@@ -204,36 +204,44 @@ export const templateOtpGantiEmail = (nama, otp) => {
 
 export const templateNotifikasiKeluarAdmin = (
   namaPenyewa,
-  kamarSekarang,
-  tanggalTarget,
-  urlDashboard,
+  kamarLama,
+  kamarBaru,
+  jenis,
+  tanggalFormat,
+  urlDashboard
 ) => {
+  const isPindah = jenis === "pindah-kamar";
+  const judul = isPindah ? "Jadwal Pindah Kamar" : "Jadwal Check-out";
+  
+  const detailAksi = isPindah 
+    ? `Penyewa dijadwalkan pindah dari <strong>Kamar ${kamarLama}</strong> menuju <strong>Kamar ${kamarBaru}</strong>.`
+    : `Penyewa dijadwalkan melakukan check-out dari <strong>Kamar ${kamarLama}</strong>.`;
+
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #2c3e50;">Peringatan Hari-H Check-out Penyewa</h2>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: #e74c3c;">[PENTING] ${judul} Hari Ini</h2>
       <p>Halo Admin KostRumahKu,</p>
-      <p>Hari ini adalah jadwal check-out untuk penyewa berikut:</p>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-        <tr>
-          <td style="padding: 8px; border: 1px solid #ddd;"><strong>Nama Penyewa</strong></td>
-          <td style="padding: 8px; border: 1px solid #ddd;">${namaPenyewa}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border: 1px solid #ddd;"><strong>Kamar</strong></td>
-          <td style="padding: 8px; border: 1px solid #ddd;">${kamarSekarang}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border: 1px solid #ddd;"><strong>Tanggal Check-out</strong></td>
-          <td style="padding: 8px; border: 1px solid #ddd;">${tanggalTarget}</td>
-        </tr>
-      </table>
-      <p style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #f39c12;">
-        <strong>Tindakan yang Diperlukan:</strong><br/>
-        Mohon pastikan serah terima kunci fisik dilakukan hari ini. Setelah penyewa benar-benar keluar, jangan lupa menekan tombol <b>"Selesaikan Check-out"</b> pada dashboard Anda untuk mengubah status kamar menjadi KOSONG.
-      </p>
-      <div style="margin-top: 30px;">
-        <a href="${urlDashboard}" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Buka Dashboard Admin</a>
+      
+      <p>Ini adalah pengingat otomatis bahwa pada hari ini, <strong>${tanggalFormat}</strong>, terdapat jadwal eksekusi operasional:</p>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #e74c3c; margin: 20px 0;">
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+          <li><strong>Nama Penyewa:</strong> ${namaPenyewa}</li>
+          <li><strong>Jenis Pengajuan:</strong> ${isPindah ? "Pindah Kamar" : "Berhenti Sewa"}</li>
+          <li><strong>Detail:</strong> ${detailAksi}</li>
+        </ul>
       </div>
+
+      <p style="background-color: #fff3cd; padding: 15px; border-radius: 4px; color: #856404; font-weight: bold;">
+        Tindakan yang Diperlukan:<br/>
+        Mohon pastikan serah terima kunci dilakukan hari ini. Setelah penyewa memindahkan barang, Anda WAJIB menekan tombol "Selesaikan Eksekusi" pada dashboard agar sistem dapat mereset data kamar dan tagihan.
+      </p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${urlDashboard}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Buka Dashboard Admin</a>
+      </div>
+      
+      <p>Sistem Manajemen KostRumahKu</p>
     </div>
   `;
 };
@@ -282,7 +290,6 @@ export const templatePembatalanOlehPenyewa = (namaPenyewa, jenisPengajuan) => {
   `;
 };
 
-// --- TEMPLAT UNTUK ADMIN ---
 export const templateNotifikasiBatalKeAdmin = (namaPenyewa, kamarSekarang, jenisPengajuan) => {
   const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
   
@@ -300,7 +307,6 @@ export const templateNotifikasiBatalKeAdmin = (namaPenyewa, kamarSekarang, jenis
     </div>
   `;
 };
-
 
 export const templateHasilPengajuan = (namaPenyewa, jenisPengajuan, status, catatanAdmin, tanggalTarget) => {
   const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
@@ -329,6 +335,10 @@ export const templateHasilPengajuan = (namaPenyewa, jenisPengajuan, status, cata
       ${status === "disetujui" && jenisPengajuan === "berhenti-sewa" 
         ? `<p>Karena pengajuan disetujui, mohon bersiap untuk menyerahkan kunci kamar Anda pada tanggal <strong>${tglFormat}</strong>.</p>` 
         : ""}
+        
+      ${status === "disetujui" && jenisPengajuan === "pindah-kamar" 
+        ? `<p>Kamar tujuan Anda telah berhasil dipesan (di-booking) oleh sistem. Mohon bersiap untuk memindahkan barang dan menyerahkan kunci kamar lama Anda pada tanggal <strong>${tglFormat}</strong>.</p>` 
+        : ""}
       
       ${status === "ditolak" 
         ? `<p>Jika Anda memiliki pertanyaan lebih lanjut mengenai alasan penolakan, silakan hubungi Admin secara langsung.</p>` 
@@ -350,7 +360,7 @@ export const templateRollbackPersetujuan = (namaPenyewa, jenisPengajuan, catatan
       
       <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #8e44ad; margin: 20px 0;">
         <p style="margin: 0 0 10px 0;"><strong>Catatan dari Admin:</strong></p>
-        <p style="margin: 0; font-style: italic;">"${catatanAdmin || 'Penyewa batal keluar, masa sewa diperpanjang.'}"</p>
+        <p style="margin: 0; font-style: italic;">"${catatanAdmin || 'Penyewa batal pindah/keluar, masa sewa diperpanjang.'}"</p>
       </div>
 
       <p>Dengan pembatalan ini, status kamar dan kewajiban tagihan bulanan Anda akan dikembalikan seperti semula (aktif). Harap periksa kembali menu Tagihan di dashboard Anda jika sebelumnya ada tagihan yang sempat dibatalkan.</p>
