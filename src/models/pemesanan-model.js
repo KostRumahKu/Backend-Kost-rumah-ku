@@ -11,10 +11,15 @@ const pemesananSchema = new mongoose.Schema({
     enum: ['menunggu-pembayaran', 'menunggu-validasi', 'berhasil', 'dibatalkan'], 
     default: 'menunggu-pembayaran' 
   },
+  "rekening-tujuan": { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'RekeningKost',
+    default: null 
+  },
   
-  'bukti-pembayaran': { type: String }, // Menyimpan URL CDN dari Frontend
-  'tanggal-mulai': { type: Date, required: true }, // Rencana tanggal masuk dari form
-  'batas-waktu-bayar': { type: Date, required: true } // Kunci untuk sistem Cron Job Timeout
+  'bukti-pembayaran': { type: String }, 
+  'tanggal-mulai': { type: Date, required: true }, 
+  'batas-waktu-bayar': { type: Date, required: true } 
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
 });
