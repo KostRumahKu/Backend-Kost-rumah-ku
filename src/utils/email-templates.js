@@ -208,12 +208,12 @@ export const templateNotifikasiKeluarAdmin = (
   kamarBaru,
   jenis,
   tanggalFormat,
-  urlDashboard
+  urlDashboard,
 ) => {
   const isPindah = jenis === "pindah-kamar";
   const judul = isPindah ? "Jadwal Pindah Kamar" : "Jadwal Check-out";
-  
-  const detailAksi = isPindah 
+
+  const detailAksi = isPindah
     ? `Penyewa dijadwalkan pindah dari <strong>Kamar ${kamarLama}</strong> menuju <strong>Kamar ${kamarBaru}</strong>.`
     : `Penyewa dijadwalkan melakukan check-out dari <strong>Kamar ${kamarLama}</strong>.`;
 
@@ -246,11 +246,21 @@ export const templateNotifikasiKeluarAdmin = (
   `;
 };
 
-export const templatePengajuanDibuat = (namaPenyewa, jenisPengajuan, tanggalTarget) => {
-  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa (Check-out)" : "Pindah Kamar";
-  
+export const templatePengajuanDibuat = (
+  namaPenyewa,
+  jenisPengajuan,
+  tanggalTarget,
+) => {
+  const jenisTeks =
+    jenisPengajuan === "berhenti-sewa"
+      ? "Berhenti Sewa (Check-out)"
+      : "Pindah Kamar";
+
   const tglFormat = new Date(tanggalTarget).toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric"
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
   return `
@@ -277,8 +287,9 @@ export const templatePengajuanDibuat = (namaPenyewa, jenisPengajuan, tanggalTarg
 };
 
 export const templatePembatalanOlehPenyewa = (namaPenyewa, jenisPengajuan) => {
-  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
-  
+  const jenisTeks =
+    jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #e74c3c;">Pembatalan Pengajuan Berhasil</h2>
@@ -290,9 +301,14 @@ export const templatePembatalanOlehPenyewa = (namaPenyewa, jenisPengajuan) => {
   `;
 };
 
-export const templateNotifikasiBatalKeAdmin = (namaPenyewa, kamarSekarang, jenisPengajuan) => {
-  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
-  
+export const templateNotifikasiBatalKeAdmin = (
+  namaPenyewa,
+  kamarSekarang,
+  jenisPengajuan,
+) => {
+  const jenisTeks =
+    jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #f39c12;">Informasi Pembatalan Pengajuan</h2>
@@ -308,14 +324,24 @@ export const templateNotifikasiBatalKeAdmin = (namaPenyewa, kamarSekarang, jenis
   `;
 };
 
-export const templateHasilPengajuan = (namaPenyewa, jenisPengajuan, status, catatanAdmin, tanggalTarget) => {
-  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
-  
+export const templateHasilPengajuan = (
+  namaPenyewa,
+  jenisPengajuan,
+  status,
+  catatanAdmin,
+  tanggalTarget,
+) => {
+  const jenisTeks =
+    jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+
   const warnaHeader = status === "disetujui" ? "#27ae60" : "#e74c3c";
   const teksStatus = status === "disetujui" ? "DISETUJUI" : "DITOLAK";
-  
+
   const tglFormat = new Date(tanggalTarget).toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric"
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
   return `
@@ -332,26 +358,37 @@ export const templateHasilPengajuan = (namaPenyewa, jenisPengajuan, status, cata
         </ul>
       </div>
 
-      ${status === "disetujui" && jenisPengajuan === "berhenti-sewa" 
-        ? `<p>Karena pengajuan disetujui, mohon bersiap untuk menyerahkan kunci kamar Anda pada tanggal <strong>${tglFormat}</strong>.</p>` 
-        : ""}
+      ${
+        status === "disetujui" && jenisPengajuan === "berhenti-sewa"
+          ? `<p>Karena pengajuan disetujui, mohon bersiap untuk menyerahkan kunci kamar Anda pada tanggal <strong>${tglFormat}</strong>.</p>`
+          : ""
+      }
         
-      ${status === "disetujui" && jenisPengajuan === "pindah-kamar" 
-        ? `<p>Kamar tujuan Anda telah berhasil dipesan (di-booking) oleh sistem. Mohon bersiap untuk memindahkan barang dan menyerahkan kunci kamar lama Anda pada tanggal <strong>${tglFormat}</strong>.</p>` 
-        : ""}
+      ${
+        status === "disetujui" && jenisPengajuan === "pindah-kamar"
+          ? `<p>Kamar tujuan Anda telah berhasil dipesan (di-booking) oleh sistem. Mohon bersiap untuk memindahkan barang dan menyerahkan kunci kamar lama Anda pada tanggal <strong>${tglFormat}</strong>.</p>`
+          : ""
+      }
       
-      ${status === "ditolak" 
-        ? `<p>Jika Anda memiliki pertanyaan lebih lanjut mengenai alasan penolakan, silakan hubungi Admin secara langsung.</p>` 
-        : ""}
+      ${
+        status === "ditolak"
+          ? `<p>Jika Anda memiliki pertanyaan lebih lanjut mengenai alasan penolakan, silakan hubungi Admin secara langsung.</p>`
+          : ""
+      }
       
       <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
     </div>
   `;
 };
 
-export const templateRollbackPersetujuan = (namaPenyewa, jenisPengajuan, catatanAdmin) => {
-  const jenisTeks = jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
-  
+export const templateRollbackPersetujuan = (
+  namaPenyewa,
+  jenisPengajuan,
+  catatanAdmin,
+) => {
+  const jenisTeks =
+    jenisPengajuan === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar";
+
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #8e44ad;">Persetujuan Pengajuan Dibatalkan</h2>
@@ -360,12 +397,140 @@ export const templateRollbackPersetujuan = (namaPenyewa, jenisPengajuan, catatan
       
       <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #8e44ad; margin: 20px 0;">
         <p style="margin: 0 0 10px 0;"><strong>Catatan dari Admin:</strong></p>
-        <p style="margin: 0; font-style: italic;">"${catatanAdmin || 'Penyewa batal pindah/keluar, masa sewa diperpanjang.'}"</p>
+        <p style="margin: 0; font-style: italic;">"${catatanAdmin || "Penyewa batal pindah/keluar, masa sewa diperpanjang."}"</p>
       </div>
 
       <p>Dengan pembatalan ini, status kamar dan kewajiban tagihan bulanan Anda akan dikembalikan seperti semula (aktif). Harap periksa kembali menu Tagihan di dashboard Anda jika sebelumnya ada tagihan yang sempat dibatalkan.</p>
       
       <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+    </div>
+  `;
+};
+
+
+export const templateBookingBerhasil = (
+  nama,
+  kamar,
+  totalTagihan,
+  batasWaktu,
+) => {
+  const formatTanggal = new Date(batasWaktu).toLocaleString("id-ID", {
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+  const formatHarga = Number(totalTagihan).toLocaleString("id-ID");
+
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <h2>Halo ${nama}, Pesanan Kamar Anda Berhasil Dibuat!</h2>
+      <p>Terima kasih telah memesan kamar <b>${kamar}</b> di Kost RumahKu.</p>
+      <p>Agar pesanan Anda tidak dibatalkan otomatis oleh sistem, mohon segera selesaikan pembayaran sebesar:</p>
+      <h3 style="color: #28a745;">Rp ${formatHarga}</h3>
+      <p><b>Batas Waktu Pembayaran:</b><br/> <span style="color: #dc3545; font-weight: bold;">${formatTanggal} WIB</span></p>
+      <p>Silakan lakukan transfer ke salah satu rekening kami yang tertera di website, dan segera unggah bukti pembayaran melalui sistem.</p>
+      <p style="font-size: 0.9em; color: #777;">Abaikan email ini jika Anda sudah melakukan pembayaran.</p>
+    </div>
+  `;
+};
+
+export const templateNotifikasiPembayaranBaru = (
+  namaPenyewa,
+  kamar,
+  urlDashboard,
+) => {
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <h2>Notifikasi Pembayaran Baru Masuk</h2>
+      <p>Calon penyewa atas nama <b>${namaPenyewa}</b> (Kamar: <b>${kamar}</b>) baru saja mengunggah bukti pembayaran.</p>
+      <p>Mohon segera cek dan lakukan validasi (Setujui/Tolak) agar status kamar dapat diperbarui.</p>
+      <a href="${urlDashboard}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Buka Dashboard Admin</a>
+    </div>
+  `;
+};
+
+export const templatePembayaranDitolak = (
+  nama,
+  kamar,
+  catatanAdmin,
+  batasWaktuBaru,
+  linkUpload,
+) => {
+  const formatTanggal = new Date(batasWaktuBaru).toLocaleString("id-ID", {
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <h2>Mohon Maaf ${nama}, Bukti Pembayaran Ditolak</h2>
+      <p>Admin kami telah meninjau unggahan bukti pembayaran Anda untuk kamar <b>${kamar}</b>, namun belum dapat memvalidasinya karena alasan berikut:</p>
+      
+      <blockquote style="border-left: 4px solid #dc3545; padding-left: 15px; margin: 15px 0; color: #555; font-style: italic;">
+        "${catatanAdmin || "Bukti transfer tidak valid atau kurang jelas."}"
+      </blockquote>
+      
+      <p>Jangan khawatir! Kami memberikan perpanjangan waktu. Silakan klik tombol di bawah ini untuk mengunggah ulang foto bukti pembayaran yang benar sebelum:</p>
+      <p><b>Batas Waktu Baru:</b> <span style="color: #dc3545; font-weight: bold;">${formatTanggal} WIB</span></p>
+      
+      <div style="margin: 25px 0;">
+        <a href="${linkUpload}" style="background-color: #007bff; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Upload Ulang Bukti</a>
+      </div>
+      
+      <p style="font-size: 0.9em; color: #555;">Jika tombol tidak berfungsi, salin dan tempel tautan berikut di browser Anda:</p>
+      <p style="font-size: 0.9em; color: #007bff;"><a href="${linkUpload}">${linkUpload}</a></p>
+    </div>
+  `;
+};
+
+export const templateSelamatDatangPenyewa = (
+  nama,
+  kamar,
+  emailUser,
+  plainPassword,
+) => {
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <h2 style="color: #28a745;">Selamat Datang di Kost RumahKu!</h2>
+      <p>Halo ${nama}, pembayaran Anda untuk kamar <b>${kamar}</b> telah berhasil divalidasi oleh Admin.</p>
+      <p>Mulai sekarang, Anda resmi menjadi bagian dari Kost RumahKu! Berikut adalah akses akun Anda untuk melihat tagihan dan mengajukan komplain/pindah kamar di sistem:</p>
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+        <p style="margin: 0 0 10px 0;"><b>Email:</b> ${emailUser}</p>
+        <p style="margin: 0;"><b>Password Sementara:</b> ${plainPassword}</p>
+      </div>
+      <p style="color: #dc3545; font-size: 0.9em;"><i>PENTING: Harap segera mengganti password Anda setelah berhasil login demi keamanan akun.</i></p>
+      <p>Terima kasih dan selamat beristirahat!</p>
+    </div>
+  `;
+};
+
+export const templateBookingBatalOtomatis = (nama, kamar) => {
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <h2 style="color: #dc3545;">Pemesanan Kamar Dibatalkan Otomatis</h2>
+      <p>Halo ${nama},</p>
+      <p>Mohon maaf, batas waktu pembayaran untuk pemesanan kamar <b>${kamar}</b> telah habis.</p>
+      <p>Sistem kami telah membatalkan pesanan Anda secara otomatis dan status kamar kembali tersedia untuk disewa oleh umum.</p>
+      <p>Jika Anda masih berminat, silakan lakukan pemesanan ulang melalui website kami selama kamar masih tersedia.</p>
+      <p>Terima kasih atas ketertarikan Anda pada Kost RumahKu.</p>
+    </div>
+  `;
+};
+
+export const templatePemesananDibatalkanAdmin = (nama, kamar, catatanAdmin) => {
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <h2 style="color: #dc3545;">Pemesanan Kamar Dibatalkan</h2>
+      <p>Halo ${nama},</p>
+      <p>Mohon maaf, pemesanan Anda untuk kamar <b>${kamar}</b> telah <b>dibatalkan secara permanen</b> oleh Admin Kost RumahKu.</p>
+      
+      <p><b>Alasan Pembatalan:</b></p>
+      <blockquote style="border-left: 4px solid #dc3545; padding-left: 15px; margin: 15px 0; color: #555; font-style: italic;">
+        "${catatanAdmin || "Terindikasi melakukan unggahan bukti pembayaran palsu atau tidak sah secara berulang."}"
+      </blockquote>
+      
+      <p>Status kamar Anda kini telah ditarik dan kembali tersedia untuk umum. Akun pendaftaran sementara Anda juga telah dihapus dari sistem kami.</p>
+      <p>Jika Anda merasa ini adalah sebuah kesalahan, silakan lakukan pemesanan ulang melalui website kami dan pastikan Anda mentransfer sesuai nominal serta mengunggah bukti transaksi asli yang sah.</p>
+      <p>Terima kasih.</p>
     </div>
   `;
 };

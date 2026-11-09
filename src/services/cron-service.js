@@ -4,7 +4,12 @@ import Kamar from "../models/kamar-model.js";
 import Tagihan from "../models/tagihan-model.js";
 import Pengajuan from "../models/pengajuan-model.js";
 import { kirimEmail } from "../utils/mail-service.js";
-import { templateTagihanBaru, templateNotifikasiKeluarAdmin } from "../utils/email-templates.js";
+import {
+  templateTagihanBaru,
+  templateNotifikasiKeluarAdmin,
+  templateBookingBatalOtomatis,
+} from "../utils/email-templates.js";
+import Pemesanan from "../models/pemesanan-model.js";
 
 // ===== H-10 =====
 export const generateTagihanBulanan = async () => {
@@ -149,6 +154,47 @@ export const notifikasiEksekusiHariIniAdmin = async () => {
   }
 };
 
+export const bersihkanPesananKadaluarsa = async () => {
+  try {
+    const sekarang = new Date();
+    
+    const pesananExpired = await Pemesanan.find({
+      status: "menunggu-pembayaran",
+      "batas-waktu-bayar": { $lt: sekarang }
+    }).populate("id-pengguna").populate("id-kamar");
+
+    for (const pesanan of pesananExpired) {
+      const pengguna = pesanan["id-pengguna"];
+      const kamar = pesanan["id-kamar"];
+
+      if (pengguna && kamar) {
+         const htmlBatal = templateBookingBatalOtomatis(pengguna["nama-lengkap"], kamar["nama-kamar"]);
+         
+         await kirimEmail({
+           to: pengguna.email,
+           subject: "Pesanan Kamar Dibatalkan (Waktu Pembayaran Habis) - Kost RumahKu",
+           html: htmlBatal
+         }).catch(err => console.error(`[Cron] Gagal kirim email batal ke ${pengguna.email}:`, err));
+      }
+
+      if (kamar) {
+        await Kamar.findByIdAndUpdate(kamar._id, { $set: { status: "kosong" } });
+      }
+      
+      if (pengguna) {
+        await Pengguna.findByIdAndDelete(pengguna._id);
+      }
+      
+      await Pemesanan.findByIdAndDelete(pesanan._id);
+    }
+
+    if (pesananExpired.length > 0) {
+      console.log(`[Cron] 🧹 Berhasil membersihkan ${pesananExpired.length} pesanan kadaluarsa (Clean Slate) dan mengirim notifikasi.`);
+    }
+  } catch (error) {
+    console.error("[Cron] ❌ Error saat membersihkan pesanan kadaluarsa:", error);
+  }
+};
 // ==== JADWAL CRON JOB (08:00 WIB) ====
 export const inisialisasiCronJob = () => {
   // Tanggal 23 Jam 08:00 Pagi -> Generate Tagihan Bulan Depan (H-10)
@@ -164,7 +210,10 @@ export const inisialisasiCronJob = () => {
   cron.schedule("0 8 3 * *", () => kirimPengingatTagihan("LATE"));
 
   // Jam 07:00 Pagi -> Notifikasi Check-out ke Admin
-  cron.schedule("0 7 * * *", () => notifikasiCheckoutAdmin());
+  cron.schedule("0 7 * * *", () => notifikasiEksekusiHariIniAdmin());
+
+  // setiap 5 menit cek pesanan id yang sudah kadaluarsa
+  cron.schedule("*/5 * * * *", async () => { await bersihkanPesananKadaluarsa(); });
 
   console.log("semua jadwal cron job berhasil dijalankan!");
 };
