@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const rekeningSchema = new mongoose.Schema({
   'nama-bank': { type: String, required: true }, // Contoh: "BCA", "Mandiri", "QRIS"
-  'nama-pemilik': { type: String, required: true }, // Contoh: "Bpk. Budi Santoso"
-  'nomor-rekening': { type: String, required: true }, // Contoh: "847291002"
+  'nama-pemilik': { type: String, required: true }, // Contoh: "Bpk. Budi Supar"
+  'nomor-rekening': { type: String, required: true }, // Contoh: "847291002", jika ini QRIS maka isi nya NMID dari QRIS tersebut
   'jenis': { type: String, enum: ['transfer-bank', 'e-wallet', 'qris'], required: true },
   'logo-bank': { type: String }, // URL Icon bank dari FE/CDN
   'foto-qris': { type: String }, // Jika jenisnya QRIS, admin bisa upload gambar barcode

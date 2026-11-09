@@ -158,8 +158,6 @@ export const bersihkanPesananKadaluarsa = async () => {
   try {
     const sekarang = new Date();
     
-    // Cari pesanan yang masih menunggu pembayaran tapi waktunya sudah lewat
-    // Gunakan .populate() agar kita bisa membaca email dan nama kamar sebelum dihapus
     const pesananExpired = await Pemesanan.find({
       status: "menunggu-pembayaran",
       "batas-waktu-bayar": { $lt: sekarang }
@@ -169,8 +167,6 @@ export const bersihkanPesananKadaluarsa = async () => {
       const pengguna = pesanan["id-pengguna"];
       const kamar = pesanan["id-kamar"];
 
-      // 1. KIRIM EMAIL NOTIFIKASI PEMBATALAN
-      // Lakukan ini pertama, selagi data pengguna dan kamar masih ada di memori
       if (pengguna && kamar) {
          const htmlBatal = templateBookingBatalOtomatis(pengguna["nama-lengkap"], kamar["nama-kamar"]);
          
@@ -181,17 +177,14 @@ export const bersihkanPesananKadaluarsa = async () => {
          }).catch(err => console.error(`[Cron] Gagal kirim email batal ke ${pengguna.email}:`, err));
       }
 
-      // 2. Bebaskan Kamar (Kembalikan jadi 'kosong')
       if (kamar) {
         await Kamar.findByIdAndUpdate(kamar._id, { $set: { status: "kosong" } });
       }
       
-      // 3. Hapus Akun Calon Penyewa (Clean Slate)
       if (pengguna) {
         await Pengguna.findByIdAndDelete(pengguna._id);
       }
       
-      // 4. Hapus Data Pesanan agar tidak menumpuk jadi sampah (Spam)
       await Pemesanan.findByIdAndDelete(pesanan._id);
     }
 
