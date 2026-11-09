@@ -3,7 +3,7 @@ import {
   prosesBookingKamar,
   uploadBuktiPembayaranBooking,
 } from "../../services/public-service.js";
-import { ambilDaftarRekening } from "../../services/admin-services/admin-rekening-service.js"; // Sesuaikan path jika berbeda
+import { ambilDaftarRekening } from "../../services/admin-services/admin-rekening-service.js"; 
 import { AppError } from "../../errors.js";
 import {
   kontrakPublicBooking,
