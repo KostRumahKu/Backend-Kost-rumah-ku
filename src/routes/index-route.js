@@ -13,6 +13,8 @@ import adminPengajuanRoute from "./admin-routes/admin-pengajuan-route.js";
 import { getDaftarRekeningPublik } from "../controllers/public-controllers/public-controller.js";
 import rekeningRoutes from "./admin-routes/admin-rekening-route.js";
 import adminBookingRoutes from "./admin-routes/admin-booking-route.js";
+import adminPeraturanRoutes from "./admin-routes/admin-peraturan-route.js";
+import { ambilSemuaPeraturan } from "../controllers/admin-controllers/admin-peraturan-controller.js";
 
 const router = express.Router();
 
@@ -28,5 +30,6 @@ router.use("/admin/pengajuan", adminPengajuanRoute);
 router.get("/public/rekening", getDaftarRekeningPublik);
 router.use("/admin/rekening", rekeningRoutes);
 router.use("/admin/booking", adminBookingRoutes);
-
+router.use("/admin/peraturan", adminPeraturanRoutes);
+router.get("/public/semuaPeraturan", ambilSemuaPeraturan);
 export default router;
