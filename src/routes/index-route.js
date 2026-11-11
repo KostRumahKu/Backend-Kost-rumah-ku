@@ -31,5 +31,5 @@ router.get("/public/rekening", getDaftarRekeningPublik);
 router.use("/admin/rekening", rekeningRoutes);
 router.use("/admin/booking", adminBookingRoutes);
 router.use("/admin/peraturan", adminPeraturanRoutes);
-router.get("/public/semuaPeraturan", ambilSemuaPeraturan);
+router.get("/public/semua-peraturan", ambilSemuaPeraturan);
 export default router;
