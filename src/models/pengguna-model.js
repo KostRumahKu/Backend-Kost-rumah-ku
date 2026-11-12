@@ -19,7 +19,13 @@ const penggunaSchema = new mongoose.Schema({
     default: null 
   },
   'tanggal-mulai': { type: Date },
-  'tanggal-berakhir': { type: Date }
+  'tanggal-berakhir': { type: Date },
+  'otp-reset': { type: String, default: null },
+  'otp-kedaluwarsa': { type: Date, default: null },
+  'foto-profil': { 
+    type: String, 
+    default: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg" 
+  },
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
 });

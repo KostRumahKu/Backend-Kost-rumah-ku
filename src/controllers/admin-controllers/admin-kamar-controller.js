@@ -1,10 +1,10 @@
-import * as kamarService from "../services/admin-kamar-service.js";
+import * as kamarService from "../../services/admin-services/admin-kamar-service.js";
 import {
   kontrakInputPenghuni,
   kontrakPindahKamar,
   kontrakUbahKamar,
-} from "../contracts/kamar-contract.js";
-import { AppError } from "../errors.js";
+} from "../../contracts/kamar-contract.js";
+import { AppError } from "../../errors.js";
 
 export const tambahKamar = async (req, res) => {
   if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {

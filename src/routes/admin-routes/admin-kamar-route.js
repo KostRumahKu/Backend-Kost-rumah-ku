@@ -1,6 +1,6 @@
 import express from "express";
-import * as kamarController from "../controllers/admin-kamar-controller.js";
-import { verifikasiToken, otorisasiPeran } from "../middlewares/auth-middleware.js";
+import * as kamarController from "../../controllers/admin-controllers/admin-kamar-controller.js";
+import { verifikasiToken, otorisasiPeran } from "../../middlewares/auth-middleware.js";
 
 const router = express.Router();
 

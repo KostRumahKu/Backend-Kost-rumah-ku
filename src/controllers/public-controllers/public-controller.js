@@ -1,4 +1,4 @@
-import * as publikKamarService from "../services/public-service.js";
+import * as publikKamarService from "../../services/public-service";
 
 export const getKamarPublikData= async (req, res) => {
   const dataLandingPage = await publikKamarService.ambilDataPublicKamar(req.query);

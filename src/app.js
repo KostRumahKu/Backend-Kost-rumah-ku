@@ -28,6 +28,7 @@ app.get("/", (req, res) => {
 
 app.use("/api", verifyInternalKey, routes);
 
+// ini app js
 app.use((req, res, next) => {
   next(new AppError("ROUTE_TIDAK_DITEMUKAN", "Rute tidak ditemukan."));
 });
