@@ -15,7 +15,9 @@ import rekeningRoutes from "./admin-routes/admin-rekening-route.js";
 import adminBookingRoutes from "./admin-routes/admin-booking-route.js";
 import adminPeraturanRoutes from "./admin-routes/admin-peraturan-route.js";
 import { ambilSemuaPeraturan } from "../controllers/admin-controllers/admin-peraturan-controller.js";
-
+import pdfPeneywaGenerate from "./penyewa-routes/penyewa-tagihan-route.js";
+import pdfAdminGenerate from "./admin-routes/admin-generate.js";
+import adminTagihanRoutes from "./admin-routes/admin-tagihan-route.js"
 const router = express.Router();
 
 router.use("/auth", authRoutes);
@@ -32,4 +34,7 @@ router.use("/admin/rekening", rekeningRoutes);
 router.use("/admin/booking", adminBookingRoutes);
 router.use("/admin/peraturan", adminPeraturanRoutes);
 router.get("/public/semua-peraturan", ambilSemuaPeraturan);
+router.use("/penyewa/tagihan", pdfPeneywaGenerate);
+router.use("/admin/generate", pdfAdminGenerate);
+router.use("/admin/tagihan", adminTagihanRoutes);
 export default router;
