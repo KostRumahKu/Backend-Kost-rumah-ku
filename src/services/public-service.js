@@ -10,6 +10,42 @@ import {
 import { ambilDaftarRekening } from "./admin-services/admin-rekening-service.js";
 import RekeningKost from "../models/rekening-model.js";
 
+export const ambilDetailPemesananPublik = async (idPemesanan) => {
+  const pesanan = await Pemesanan.findById(idPemesanan)
+    .populate("id-pengguna", "nama-lengkap email nomor-telepon")
+    .populate("id-kamar", "nama-kamar tipe-kamar lantai harga");
+
+  if (!pesanan) {
+    throw new AppError("NOT_FOUND", "Data pemesanan tidak ditemukan atau sudah kedaluwarsa.");
+  }
+
+  const daftarRekeningMentah = await ambilDaftarRekening();
+  const daftarRekeningAman = daftarRekeningMentah.map((rek) => ({
+    "id-rekening": rek._id,
+    "nama-bank": rek["nama-bank"],
+    "nama-pemilik": rek["nama-pemilik"],
+    "nomor-rekening": rek["nomor-rekening"],
+    jenis: rek.jenis,
+    "logo-bank": rek["logo-bank"],
+    "foto-qris": rek["foto-qris"],
+  }));
+
+  const hargaPerBulan = pesanan["id-kamar"] ? pesanan["id-kamar"].harga : 0;
+  const totalTagihan = hargaPerBulan * pesanan["durasi-bulan"];
+
+  return {
+    "id-pemesanan": pesanan._id,
+    "status-pemesanan": pesanan.status,
+    "batas-waktu-bayar": pesanan["batas-waktu-bayar"],
+    "penyewa": pesanan["id-pengguna"],
+    "kamar": pesanan["id-kamar"],
+    "durasi-bulan": pesanan["durasi-bulan"],
+    "total-tagihan": totalTagihan,
+    "bukti-pembayaran": pesanan["bukti-pembayaran"] || null,
+    "opsi-pembayaran": daftarRekeningAman
+  };
+};
+
 export const ambilDataPublicKamar= async (query = {}) => {
   const matchStage = { diarsipkan: { $ne: true } };
 
@@ -114,7 +150,7 @@ export const prosesBookingKamar = async (payload) => {
   );
 
   if (lantai > 3)
-    throw new AppError("BAD_REQUEST", "Jumlah kamar yang dipesan melebihi batas maksimum 3 lantai.");
+    throw new AppError("BAD_REQUEST", "Jumlah lantai yang di input melebihi batas maksimum 3 lantai.");
 
   if (!kamarLock) {
     throw new AppError("NOT_FOUND", `Maaf, kamar tipe ${tipeKamar} di lantai ${lantai} saat ini penuh atau baru saja didahului orang lain.`);
@@ -154,6 +190,7 @@ export const prosesBookingKamar = async (payload) => {
       kamarLock["nama-kamar"],
       totalTagihan,
       batasWaktuBayar,
+      pemesananBaru._id,
     );
 
     await kirimEmail({

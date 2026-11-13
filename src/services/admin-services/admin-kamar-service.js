@@ -9,11 +9,11 @@ import crypto from "crypto";
 import { kirimEmail } from "../../utils/mail-service.js";
 import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../../utils/email-templates.js";
 import mongoose from "mongoose";
+import KasKost from "../../models/kas-model.js";
 
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js";
 import { AppError } from "../../errors.js";
-// ============== Fungsi Service untuk Admin/Pemilik ==============
-// ============= FUNGSI MMEBUAT KAMAR BARU ==============
+
 export const tambahKamarBaru = async (dataKamar) => {
   const { lantai } = dataKamar;
 
@@ -355,6 +355,15 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
     const totalHarga = hargaBulanan * durasiBulan;
     
     const nomorInvoice = `INV-MNL-${Date.now()}`;
+
+    const kasBaru = new KasKost({
+      "tipe-transaksi": "pemasukan",
+      kategori: "pembayaran-sewa",
+      nominal: totalHarga,
+      keterangan: `Input penghuni manual (Kamar ${kamar["nama-kamar"]} - ${durasiBulan} bulan) untuk penyewa ${dataPengguna["nama-lengkap"]}`,
+      "tanggal-transaksi": new Date(),
+    });
+    await kasBaru.save({ session });
     
     for (let i = 0; i < durasiBulan; i++) {
       const bulanTagihanIni = new Date(tanggalMulai);
@@ -534,6 +543,14 @@ if (!penyewa) {
     "tanggal-bayar": tanggalSiklusSekarang,
   });
   await pembayaranBaru.save();
+  const kasMigrasi = new KasKost({
+    "tipe-transaksi": "pemasukan",
+    kategori: "pembayaran-sewa",
+    nominal: totalHarga,
+    keterangan: `Entry data lama / migrasi (Kamar ${kamar["nama-kamar"]} - ${durasiBulan} bulan) untuk penyewa ${dataPengguna["nama-lengkap"]}`,
+    "tanggal-transaksi": tanggalSiklusSekarang,
+  });
+  await kasMigrasi.save();  
 
   kamar.status = "terisi";
   await kamar.save();

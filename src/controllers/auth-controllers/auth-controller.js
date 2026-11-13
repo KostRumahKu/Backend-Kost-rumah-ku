@@ -15,6 +15,13 @@ const loginBerdasarkanPeran = (peran) => async (req, res) => {
   }
 
   const hasilLogin = await authService.prosesLogin(email, kataSandi, peran);
+  
+  if (hasilLogin.pengguna && hasilLogin.pengguna["status-akun"] === "ditangguhkan") {
+    throw new AppError(
+      "FORBIDDEN",
+      "Akun Anda ditangguhkan karena memiliki tagihan yang melewati batas waktu (menunggak). Silakan hubungi Owner atau Admin untuk menyelesaikan pembayaran manual."
+    );
+  }
 
   res.status(200).json({
     status: "sukses",

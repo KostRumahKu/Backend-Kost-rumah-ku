@@ -2,7 +2,6 @@ import PDFDocument from "pdfkit";
 import Tagihan from "../models/tagihan-model.js"; 
 import { AppError } from "../errors.js";
 
-
 export const generateInvoicePdfBuffer = async (idTagihan) => {
   const tagihan = await Tagihan.findById(idTagihan)
     .populate("id-pengguna", "nama-lengkap email nomor-telepon")
@@ -66,11 +65,16 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       const rightColX = 300;
       const peng = tagihan["id-pengguna"];
       
+      const namaPenyewaTampil = peng ? peng["nama-lengkap"] : (tagihan["nama-penyewa"] || "Mantan Penyewa");
+      const idPenggunaTampil = peng ? peng._id : "(Akun Telah Dihapus / Checkout)";
+      const teleponTampil = peng ? peng["nomor-telepon"] : "-";
+      const emailTampil = peng ? peng.email : "-";
+      
       doc.font("Helvetica-Bold").text("Ditagihkan Kepada:", rightColX, topGridY);
-      doc.font("Helvetica").text("ID Penyewa", rightColX, topGridY + 15).text(`: ${peng._id}`, rightColX + 75, topGridY + 15);
-      doc.text("Nama", rightColX, topGridY + 30).text(`: ${peng["nama-lengkap"]}`, rightColX + 75, topGridY + 30);
-      doc.text("No. HP", rightColX, topGridY + 45).text(`: ${peng["nomor-telepon"]}`, rightColX + 75, topGridY + 45);
-      doc.text("Email", rightColX, topGridY + 60).text(`: ${peng.email}`, rightColX + 75, topGridY + 60);
+      doc.font("Helvetica").text("ID Penyewa", rightColX, topGridY + 15).text(`: ${idPenggunaTampil}`, rightColX + 75, topGridY + 15);
+      doc.text("Nama", rightColX, topGridY + 30).text(`: ${namaPenyewaTampil}`, rightColX + 75, topGridY + 30);
+      doc.text("No. HP", rightColX, topGridY + 45).text(`: ${teleponTampil}`, rightColX + 75, topGridY + 45);
+      doc.text("Email", rightColX, topGridY + 60).text(`: ${emailTampil}`, rightColX + 75, topGridY + 60);
 
       doc.moveDown(5);
 
@@ -95,20 +99,66 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       doc.font("Helvetica-Bold").fontSize(12);
       doc.text("TOTAL BAYAR", 260, totalY);
       doc.text(formatRupiah, 440, totalY, { width: 95, align: "right" });
-      
       const noteY = totalY + 60;
-      doc.fontSize(10).font("Helvetica-Bold").text("Keterangan & Catatan:", 50, noteY);
       
-      doc.font("Helvetica").fontSize(9);
+      const boxX = 50;
+      const boxY = noteY;
+      const boxWidth = 240;
+      const boxHeight = 110;
+
+      doc.rect(boxX, boxY, boxWidth, boxHeight).fillAndStroke("#fafafa", "#e0e0e0");
+      doc.fillColor("black");
+
+      doc.fontSize(9).font("Helvetica-Bold").text("Pusat Bantuan & Kontak Owner:", boxX + 10, boxY + 10);
+
+      const drawPhoneIcon = (x, y) => {
+        doc.save().lineWidth(1).strokeColor("#2e7d32");
+        doc.roundedRect(x, y, 10, 14, 2).stroke();
+        doc.circle(x + 5, y + 11, 1).fill("#2e7d32");
+        doc.restore();
+      };
+
+      const drawEmailIcon = (x, y) => {
+        doc.save().lineWidth(1).strokeColor("#1565c0");
+        doc.rect(x, y + 2, 12, 9).stroke();
+        doc.moveTo(x, y + 2).lineTo(x + 6, y + 7).lineTo(x + 12, y + 2).stroke();
+        doc.restore();
+      };
+
+      const drawWebIcon = (x, y) => {
+        doc.save().lineWidth(1).strokeColor("#c2185b");
+        doc.circle(x + 6, y + 7, 6).stroke();
+        doc.ellipse(x + 6, y + 7, 2.5, 6).stroke();
+        doc.moveTo(x, y + 7).lineTo(x + 12, y + 7).stroke();
+        doc.restore();
+      };
+
+      drawPhoneIcon(boxX + 10, boxY + 30);
+      doc.font("Helvetica").fontSize(8).text("WhatsApp: +62 812-3456-7890", boxX + 28, boxY + 31);
+
+      drawEmailIcon(boxX + 10, boxY + 50);
+      doc.font("Helvetica").fontSize(8).text("Email: owner@kostrumahku.com", boxX + 28, boxY + 51);
+
+      drawWebIcon(boxX + 10, boxY + 70);
+      doc.font("Helvetica").fontSize(8).text("IG / Sosmed: @kostrumahku.official", boxX + 28, boxY + 71);
+
+      doc.fontSize(7).fillColor("#666666").text("Operasional: Sen - Sab (08:00 - 17:00 WIB)", boxX + 10, boxY + 90);
+      doc.fillColor("black");
+
+      const rightNotesX = 305;
+      doc.fontSize(10).font("Helvetica-Bold").text("Keterangan & Catatan:", rightNotesX, noteY);
+      
+      doc.font("Helvetica").fontSize(8.5);
       if (isLunas) {
-        doc.text("Pembayaran telah diverifikasi dan diterima oleh pengelola Kost RumahKu.", 50, noteY + 15);
-        doc.text("Terima kasih atas pembayaran Anda yang tepat waktu.", 50, noteY + 28);
+        doc.text("Pembayaran telah diverifikasi dan diterima oleh pengelola Kost RumahKu.", rightNotesX, noteY + 15, { width: 240 });
+        doc.text("Terima kasih atas pembayaran Anda yang tepat waktu.", rightNotesX, noteY + 38, { width: 240 });
       } else {
-        doc.text("Harap segera melakukan pembayaran sebelum tanggal jatuh tempo.", 50, noteY + 15);
-        doc.text("Pembayaran dapat dilakukan melalui transfer atau tunai langsung kepada Admin.", 50, noteY + 28);
+        doc.text("Harap segera melakukan pembayaran sebelum tanggal jatuh tempo agar terhindar dari penangguhan akun.", rightNotesX, noteY + 15, { width: 240 });
+        doc.text("Pembayaran tunai langsung kepada Admin / Transfer ke rekening resmi.", rightNotesX, noteY + 45, { width: 240 });
       }
+
       doc.fontSize(8).fillColor("#888888");
-      doc.text(`System Ref ID: ${tagihan._id}`, 50, noteY + 60);
+      // doc.text(`System Ref ID: ${tagihan._id}`, 50, noteY + 60);
       doc.text(
         "Dokumen ini diterbitkan secara elektronik oleh Sistem Manajemen Kost RumahKu dan bertindak sebagai bukti transaksi yang sah.", 
         50, 
