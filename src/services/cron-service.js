@@ -2,8 +2,14 @@ import cron from "node-cron";
 import Pengguna from "../models/pengguna-model.js";
 import Kamar from "../models/kamar-model.js";
 import Tagihan from "../models/tagihan-model.js";
+import Pengajuan from "../models/pengajuan-model.js";
 import { kirimEmail } from "../utils/mail-service.js";
-import { templateTagihanBaru } from "../utils/email-templates.js";
+import {
+  templateTagihanBaru,
+  templateNotifikasiKeluarAdmin,
+  templateBookingBatalOtomatis,
+} from "../utils/email-templates.js";
+import Pemesanan from "../models/pemesanan-model.js";
 
 // ===== H-10 =====
 export const generateTagihanBulanan = async () => {
@@ -96,6 +102,99 @@ export const kirimPengingatTagihan = async (tipePengingat) => {
   }
 };
 
+export const notifikasiEksekusiHariIniAdmin = async () => {
+  console.log("[CRON] Mengecek jadwal eksekusi pengajuan (Check-out/Pindah) hari ini...");
+  try {
+    const hariIniAwal = new Date();
+    hariIniAwal.setHours(0, 0, 0, 0);
+    
+    const hariIniAkhir = new Date();
+    hariIniAkhir.setHours(23, 59, 59, 999);
+
+    const daftarEksekusiHariIni = await Pengajuan.find({
+      "jenis-pengajuan": { $in: ["berhenti-sewa", "pindah-kamar"] },
+      status: "disetujui",
+      "tanggal-target": {
+        $gte: hariIniAwal,
+        $lte: hariIniAkhir
+      }
+    }).populate("id-pengguna", "nama-lengkap");
+
+    if (daftarEksekusiHariIni.length > 0) {
+      const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
+      const urlDashboard = process.env.ADMIN_DASHBOARD_URL || "http://localhost:5173/admin/pengajuan";
+
+      for (const pengajuan of daftarEksekusiHariIni) {
+        const namaPenyewa = pengajuan["id-pengguna"]["nama-lengkap"];
+        const jenis = pengajuan["jenis-pengajuan"];
+        const kamarLama = pengajuan["id-kamar-sekarang"];
+        const kamarBaru = pengajuan["id-kamar-tujuan"]; 
+        
+        const tglFormat = new Date(pengajuan["tanggal-target"]).toLocaleDateString("id-ID", {
+          day: "numeric", month: "long", year: "numeric"
+        });
+
+        const subjekEmail = jenis === "berhenti-sewa" 
+          ? `[PENTING] Jadwal Check-out Hari Ini: Kamar ${kamarLama}`
+          : `[PENTING] Jadwal Pindah Kamar Hari Ini: ${kamarLama} -> ${kamarBaru}`;
+
+        await kirimEmail({
+          to: emailAdmin,
+          subject: subjekEmail,
+          html: templateNotifikasiKeluarAdmin(namaPenyewa, kamarLama, kamarBaru, jenis, tglFormat, urlDashboard)
+        });
+        
+        console.log(`✅ [CRON] Email notifikasi eksekusi kamar ${kamarLama} terkirim ke Admin.`);
+      }
+    } else {
+      console.log("[CRON] Tidak ada jadwal check-out atau pindah kamar untuk hari ini.");
+    }
+  } catch (error) {
+    console.error("[CRON ERROR] Gagal menjalankan pengecekan hari-H eksekusi:", error);
+  }
+};
+
+export const bersihkanPesananKadaluarsa = async () => {
+  try {
+    const sekarang = new Date();
+    
+    const pesananExpired = await Pemesanan.find({
+      status: "menunggu-pembayaran",
+      "batas-waktu-bayar": { $lt: sekarang }
+    }).populate("id-pengguna").populate("id-kamar");
+
+    for (const pesanan of pesananExpired) {
+      const pengguna = pesanan["id-pengguna"];
+      const kamar = pesanan["id-kamar"];
+
+      if (pengguna && kamar) {
+         const htmlBatal = templateBookingBatalOtomatis(pengguna["nama-lengkap"], kamar["nama-kamar"]);
+         
+         await kirimEmail({
+           to: pengguna.email,
+           subject: "Pesanan Kamar Dibatalkan (Waktu Pembayaran Habis) - Kost RumahKu",
+           html: htmlBatal
+         }).catch(err => console.error(`[Cron] Gagal kirim email batal ke ${pengguna.email}:`, err));
+      }
+
+      if (kamar) {
+        await Kamar.findByIdAndUpdate(kamar._id, { $set: { status: "kosong" } });
+      }
+      
+      if (pengguna) {
+        await Pengguna.findByIdAndDelete(pengguna._id);
+      }
+      
+      await Pemesanan.findByIdAndDelete(pesanan._id);
+    }
+
+    if (pesananExpired.length > 0) {
+      console.log(`[Cron] 🧹 Berhasil membersihkan ${pesananExpired.length} pesanan kadaluarsa (Clean Slate) dan mengirim notifikasi.`);
+    }
+  } catch (error) {
+    console.error("[Cron] ❌ Error saat membersihkan pesanan kadaluarsa:", error);
+  }
+};
 // ==== JADWAL CRON JOB (08:00 WIB) ====
 export const inisialisasiCronJob = () => {
   // Tanggal 23 Jam 08:00 Pagi -> Generate Tagihan Bulan Depan (H-10)
@@ -109,6 +208,12 @@ export const inisialisasiCronJob = () => {
 
   // Tanggal 3 Jam 08:00 Pagi -> Pengingat Keterlambatan (H+1)
   cron.schedule("0 8 3 * *", () => kirimPengingatTagihan("LATE"));
+
+  // Jam 07:00 Pagi -> Notifikasi Check-out ke Admin
+  cron.schedule("0 7 * * *", () => notifikasiEksekusiHariIniAdmin());
+
+  // setiap 5 menit cek pesanan id yang sudah kadaluarsa
+  cron.schedule("*/5 * * * *", async () => { await bersihkanPesananKadaluarsa(); });
 
   console.log("semua jadwal cron job berhasil dijalankan!");
 };

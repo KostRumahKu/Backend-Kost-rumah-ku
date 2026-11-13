@@ -2,6 +2,7 @@
 
 cara install:
 
+-- Bun runtime
 ```bash
 bun install
 ```
@@ -9,12 +10,22 @@ bun install
 To run:
 
 ```bash
-bun run dev
+bun run dev:bun
 ```
+
+-- NodeJs runtime
+```bash
+npm install
+```
+
+To run:
+
+```bash
+npm run dev:node
 
 jangan lupa isi .env
 
--- ini minimalis readme untuk sementara
+-- jangan dulu pakai docker nya!
 
 Docker Build:
 
