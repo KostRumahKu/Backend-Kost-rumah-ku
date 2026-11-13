@@ -34,7 +34,7 @@ router.use("/admin/rekening", rekeningRoutes);
 router.use("/admin/booking", adminBookingRoutes);
 router.use("/admin/peraturan", adminPeraturanRoutes);
 router.get("/public/semua-peraturan", ambilSemuaPeraturan);
-router.use("/penyewa/tagihan", pdfPeneywaGenerate);
+router.use("/penyewa", pdfPeneywaGenerate); //ini khusus tagihan
 router.use("/admin/generate", pdfAdminGenerate);
 router.use("/admin/tagihan", adminTagihanRoutes);
 export default router;

@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.use(verifikasiToken, otorisasiPeran("penyewa"));
 
-router.get("/", tagihanPenyewaController.ambilRiwayatTagihan);
+router.get("/tagihan", tagihanPenyewaController.ambilRiwayatTagihan);
 
 router.get("/generate/:id/pdf", rateLimiterPDF, tagihanPenyewaController.unduhInvoicePDF);
 
