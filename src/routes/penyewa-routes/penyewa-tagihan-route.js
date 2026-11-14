@@ -10,5 +10,6 @@ router.use(verifikasiToken, otorisasiPeran("penyewa"));
 router.get("/tagihan", tagihanPenyewaController.ambilRiwayatTagihan);
 
 router.get("/generate/:id/pdf", rateLimiterPDF, tagihanPenyewaController.unduhInvoicePDF);
+router.post("/permintaan-tagihan", tagihanPenyewaController.permintaanTagihanBerikutnya);
 
 export default router;

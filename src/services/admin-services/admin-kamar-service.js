@@ -9,11 +9,11 @@ import crypto from "crypto";
 import { kirimEmail } from "../../utils/mail-service.js";
 import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../../utils/email-templates.js";
 import mongoose from "mongoose";
+import KasKost from "../../models/kas-model.js";
 
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js";
 import { AppError } from "../../errors.js";
-// ============== Fungsi Service untuk Admin/Pemilik ==============
-// ============= FUNGSI MMEBUAT KAMAR BARU ==============
+
 export const tambahKamarBaru = async (dataKamar) => {
   const { lantai } = dataKamar;
 
@@ -200,7 +200,7 @@ export const hapusKamar = async (idKamar, isPermanent = false) => {
 
 export const resetKamar = async (
   idKamar,
-  catatanAdmin = "Selesai masa sewa",
+  catatanAdmin = "Selesai masa sewa (Reset Admin)",
 ) => {
   const kamar = await Kamar.findById(idKamar);
   if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
@@ -217,24 +217,95 @@ export const resetKamar = async (
     peran: "penyewa",
   });
 
-  if (penghuni) {
-    const riwayatBaru = new RiwayatSewa({
-      "id-kamar": idKamar,
-      "id-pengguna": penghuni._id,
-      "nama-penyewa": penghuni["nama-lengkap"],
-      "tanggal-masuk": penghuni["tanggal-mulai"] || penghuni["dibuat-pada"],
-      "tanggal-keluar": new Date(),
-      catatan: catatanAdmin,
-    });
-    await riwayatBaru.save();
+  let totalRefund = 0;
+  const tanggalEksekusi = new Date();
 
-    await Pengguna.findByIdAndUpdate(penghuni._id, {
-      $set: {
-        "id-kamar": null,
-        "tanggal-mulai": null,
-        "tanggal-berakhir": null,
-      },
+  if (penghuni) {
+    const tagihanLunas = await Tagihan.find({
+      "id-pengguna": penghuni._id,
+      "id-kamar": idKamar,
+      status: "lunas",
     });
+
+    const namaBulanIndo = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
+    const nilaiBulanIni =
+      tanggalEksekusi.getFullYear() * 12 + tanggalEksekusi.getMonth();
+    const idsMasaDepan = [];
+
+    for (const tag of tagihanLunas) {
+      const parts = tag["bulan-tagihan"].split(" ");
+      if (parts.length === 2) {
+        const idxBulan = namaBulanIndo.indexOf(parts[0]);
+        const tahunStr = parseInt(parts[1], 10);
+
+        if (idxBulan !== -1 && !isNaN(tahunStr)) {
+          const nilaiBulanTagihan = tahunStr * 12 + idxBulan;
+          if (nilaiBulanTagihan > nilaiBulanIni) {
+            idsMasaDepan.push(tag._id);
+            totalRefund += tag["jumlah-tagihan"];
+          }
+        }
+      }
+    }
+
+    if (idsMasaDepan.length > 0) {
+      await Tagihan.updateMany(
+        { _id: { $in: idsMasaDepan } },
+        { status: "dibatalkan" },
+      );
+
+      await new KasKost({
+        "tipe-transaksi": "pengeluaran",
+        kategori: "pengembalian-sewa",
+        nominal: totalRefund,
+        "tanggal-transaksi": tanggalEksekusi,
+      }).save();
+    }
+
+    const riwayatUpdate = await RiwayatSewa.findOneAndUpdate(
+      {
+        "id-pengguna": penghuni._id,
+        "id-kamar": idKamar,
+        "tanggal-keluar": null,
+      },
+      {
+        $set: {
+          "tanggal-keluar": tanggalEksekusi,
+          catatan: catatanAdmin,
+        },
+      },
+      { new: true },
+    );
+
+    if (!riwayatUpdate) {
+      await new RiwayatSewa({
+        "id-kamar": idKamar,
+        "id-pengguna": penghuni._id,
+        "nama-penyewa": penghuni["nama-lengkap"],
+        "tanggal-masuk": penghuni["tanggal-mulai"] || penghuni["dibuat-pada"],
+        "tanggal-keluar": tanggalEksekusi,
+        catatan: catatanAdmin,
+      }).save();
+    }
+
+    await Tagihan.deleteMany({
+      "id-pengguna": penghuni._id,
+      status: { $in: ["belum-bayar", "terlambat"] },
+    });
+
     kirimEmail({
       to: penghuni.email,
       subject: "Terima Kasih! Masa Sewa Anda Telah Berakhir",
@@ -245,21 +316,18 @@ export const resetKamar = async (
     }).catch((err) => {
       console.error("[MAIL ALERT] Gagal mengirim email checkout:", err.message);
     });
+
+    await Pengguna.findByIdAndDelete(penghuni._id);
   }
 
   kamar.status = "kosong";
   kamar["penghuni-aktif"] = null;
   await kamar.save();
 
-  const penyewaLama = await Pengguna.findOne({ "id-kamar": idKamar });
-  if (penyewaLama) {
-    penyewaLama["id-kamar"] = null;
-    penyewaLama["tanggal-mulai"] = null;
-    penyewaLama["tanggal-berakhir"] = null;
-    await penyewaLama.save(); 
-  }
-
-  return kamar;
+  return {
+    kamar,
+    refund: totalRefund,
+  };
 };
 
 // ============ INPUT PENGHUNI ==========
@@ -355,6 +423,15 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
     const totalHarga = hargaBulanan * durasiBulan;
     
     const nomorInvoice = `INV-MNL-${Date.now()}`;
+
+    const kasBaru = new KasKost({
+      "tipe-transaksi": "pemasukan",
+      kategori: "pembayaran-sewa",
+      nominal: totalHarga,
+      keterangan: `Input penghuni manual (Kamar ${kamar["nama-kamar"]} - ${durasiBulan} bulan) untuk penyewa ${dataPengguna["nama-lengkap"]}`,
+      "tanggal-transaksi": new Date(),
+    });
+    await kasBaru.save({ session });
     
     for (let i = 0; i < durasiBulan; i++) {
       const bulanTagihanIni = new Date(tanggalMulai);
@@ -365,13 +442,16 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
 
       const tagihanBaru = new Tagihan({
         "id-pengguna": penyewa._id,
+        "nama-penyewa": penyewa["nama-lengkap"],
         "id-kamar": idKamar,
         "nomor-tagihan": invoiceBulanan,
         "bulan-tagihan": namaBulanString,
         "jumlah-tagihan": hargaBulanan,
         "tanggal-jatuh-tempo": tanggalMulai,
         status: "lunas",
-        "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin"
+        "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin",
+        "rekening-tujuan": dataSewa["id-rekening"] || null,
+        "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
       });
       await tagihanBaru.save({ session });
 
@@ -517,12 +597,16 @@ if (!penyewa) {
 
   const tagihanBaru = new Tagihan({
     "id-pengguna": penyewa._id,
+    "nama-penyewa": penyewa["nama-lengkap"],
     "id-kamar": idKamar,
     "nomor-tagihan": nomorInvoice,
     "bulan-tagihan": namaBulan,
     "jumlah-tagihan": totalHarga,
     "tanggal-jatuh-tempo": tanggalSiklusSekarang,
     status: "lunas",
+    "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin",
+    "rekening-tujuan": dataSewa["id-rekening"] || null,
+    "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
   });
   await tagihanBaru.save();
 
@@ -534,6 +618,14 @@ if (!penyewa) {
     "tanggal-bayar": tanggalSiklusSekarang,
   });
   await pembayaranBaru.save();
+  const kasMigrasi = new KasKost({
+    "tipe-transaksi": "pemasukan",
+    kategori: "pembayaran-sewa",
+    nominal: totalHarga,
+    keterangan: `Entry data lama / migrasi (Kamar ${kamar["nama-kamar"]} - ${durasiBulan} bulan) untuk penyewa ${dataPengguna["nama-lengkap"]}`,
+    "tanggal-transaksi": tanggalSiklusSekarang,
+  });
+  await kasMigrasi.save();  
 
   kamar.status = "terisi";
   await kamar.save();
@@ -648,7 +740,7 @@ export const pindahKamar = async (dataPayload) => {
     "id-kamar": kamarLama._id,
     "tanggal-masuk": penyewa["tanggal-mulai"],
     "tanggal-keluar": new Date(),
-    keterangan: `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`,
+    catatan: `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`,
   });
 
   const errorValidasi = riwayatBaru.validateSync();

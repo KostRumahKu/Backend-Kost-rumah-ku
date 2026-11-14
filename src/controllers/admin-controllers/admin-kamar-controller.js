@@ -81,12 +81,20 @@ export const resetKamar = async (req, res) => {
   const idKamar = req.params.id;
   const catatan = req.body?.catatan;
 
-  await kamarService.resetKamar(idKamar, catatan);
+  const hasil = await kamarService.resetKamar(idKamar, catatan);
+
+  const pesanRefund =
+    hasil.refund > 0
+      ? ` Terdapat sisa saldo sewa sebesar Rp ${hasil.refund.toLocaleString("id-ID")} yang wajib dikembalikan (refund) dan telah dicatat sebagai pengeluaran di Buku Kas.`
+      : " Tidak ada sisa saldo sewa untuk dikembalikan.";
 
   res.status(200).json({
     status: "sukses",
-    pesan:
-      "Kamar berhasil direset menjadi kosong dan riwayat penghuni telah diarsipkan",
+    pesan: `Kamar berhasil direset menjadi kosong dan riwayat penghuni telah diarsipkan.${pesanRefund}`,
+    data: {
+      kamar: hasil.kamar,
+      "total-refund": hasil.refund,
+    },
   });
 };
 
@@ -111,6 +119,15 @@ export const inputPenghuniManual = async (req, res) => {
       "VALIDATION_ERROR",
       "Format request tidak lengkap! Harap pastikan semua data yang wajib telah diisi.",
       { kebutuhan_payload: kontrakInputPenghuni },
+    );
+  }
+  if (
+    dataSewa["metode-pembayaran"].toLowerCase() === "transfer" &&
+    !dataSewa["id-rekening"]
+  ) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "ID Rekening tujuan wajib dipilih jika metode pembayaran adalah 'transfer'.",
     );
   }
 
