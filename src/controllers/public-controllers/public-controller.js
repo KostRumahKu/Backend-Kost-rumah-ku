@@ -2,6 +2,7 @@ import {
   ambilDataPublicKamar,
   prosesBookingKamar,
   uploadBuktiPembayaranBooking,
+  ambilDetailPemesananPublik,
 } from "../../services/public-service.js";
 import { ambilDaftarRekening } from "../../services/admin-services/admin-rekening-service.js"; 
 import { AppError } from "../../errors.js";
@@ -34,6 +35,21 @@ export const getDaftarRekeningPublik = async (req, res, next) => {
       status: "sukses",
       pesan: "Berhasil memuat daftar rekening/metode pembayaran aktif.",
       data: daftarRekening,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDetailPemesananPublik = async (req, res, next) => {
+  try {
+    const { id } = req.params; 
+    const detailPemesanan = await ambilDetailPemesananPublik(id);
+
+    res.status(200).json({
+      status: "sukses",
+      pesan: "Berhasil memuat detail pemesanan.",
+      data: detailPemesanan,
     });
   } catch (error) {
     next(error);

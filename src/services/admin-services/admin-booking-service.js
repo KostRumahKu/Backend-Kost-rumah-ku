@@ -14,6 +14,7 @@ import {
 } from "../../utils/email-templates.js";
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js"; 
 import mongoose from "mongoose"; 
+import KasKost from "../../models/kas-model.js";
 
 export const ambilDaftarPemesananAdmin = async (query) => {
   const { status, sort } = query;
@@ -172,7 +173,8 @@ export const prosesValidasiBooking = async (idPemesanan, payload) => {
       const nomorInvoice = `INV-DP-${Date.now()}-${Math.floor(Math.random() * 1000)}-${i + 1}`;
 
       const tagihanBaru = new Tagihan({
-        "id-pengguna": idResmiBaru, 
+        "id-pengguna": idResmiBaru,
+        "nama-penyewa": penggunaBaru["nama-lengkap"],
         "id-kamar": kamar._id,
         "nomor-tagihan": nomorInvoice,
         "bulan-tagihan": namaBulanString,
@@ -180,11 +182,24 @@ export const prosesValidasiBooking = async (idPemesanan, payload) => {
         "tanggal-jatuh-tempo": tglMulai,
         status: "lunas",
         "bukti-pembayaran": pesanan["bukti-pembayaran"],
+        "rekening-tujuan": pesanan["rekening-tujuan"] || null, 
+        "metode-pembayaran": pesanan["rekening-tujuan"] ? "Transfer / QRIS" : "Transfer"
       });
 
       await tagihanBaru.save({ session });
     }
+    const totalPemasukanAwal = kamar.harga * pesanan["durasi-bulan"];
 
+    const kasBaru = new KasKost({
+      "tipe-transaksi": "pemasukan",
+      kategori: "pembayaran-sewa",
+      nominal: totalPemasukanAwal,
+      keterangan: `Pembayaran awal sewa kamar ${kamar["nama-kamar"]} (${pesanan["durasi-bulan"]} bulan) oleh penyewa baru ${penggunaBaru["nama-lengkap"]}`,
+      "tanggal-transaksi": new Date(),
+      "id-referensi": pesanan._id,
+    });
+
+    await kasBaru.save({ session });
     pesanan["id-pengguna"] = idResmiBaru;
     pesanan.status = "berhasil";
     await pesanan.save({ session });

@@ -10,6 +10,11 @@ const penggunaSchema = new mongoose.Schema({
     enum: ['pemilik', 'admin', 'penyewa', 'calon-penyewa'], 
     default: 'calon-penyewa' 
   },
+  'status-akun': {
+    type: String,
+    enum: ['aktif', 'ditangguhkan'],
+    default: 'aktif'
+  },
   'nomor-telepon': { type: String, required: true, unique: true },
   'nama-kontak-darurat': { type: String, required: true },
   'nomor-kontak-darurat': { type: String, required: true },

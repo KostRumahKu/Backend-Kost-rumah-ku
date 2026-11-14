@@ -413,12 +413,15 @@ export const templateBookingBerhasil = (
   kamar,
   totalTagihan,
   batasWaktu,
+  idPemesanan, 
 ) => {
   const formatTanggal = new Date(batasWaktu).toLocaleString("id-ID", {
     dateStyle: "full",
     timeStyle: "short",
   });
   const formatHarga = Number(totalTagihan).toLocaleString("id-ID");
+
+  const urlBayar = `/api/public/booking/${idPemesanan}`; 
 
   return `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
@@ -427,6 +430,14 @@ export const templateBookingBerhasil = (
       <p>Agar pesanan Anda tidak dibatalkan otomatis oleh sistem, mohon segera selesaikan pembayaran sebesar:</p>
       <h3 style="color: #28a745;">Rp ${formatHarga}</h3>
       <p><b>Batas Waktu Pembayaran:</b><br/> <span style="color: #dc3545; font-weight: bold;">${formatTanggal} WIB</span></p>
+      
+      <!-- Tombol Akses Pembayaran -->
+      <div style="margin: 25px 0;">
+        <a href="${urlBayar}" style="background-color: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Lanjut ke Pembayaran & Unggah Bukti</a>
+      </div>
+
+      <p>Atau salin tautan berikut ke browser Anda jika tombol di atas tidak berfungsi:<br/><a href="${urlBayar}" style="color: #007bff;">${urlBayar}</a></p>
+      
       <p>Silakan lakukan transfer ke salah satu rekening kami yang tertera di website, dan segera unggah bukti pembayaran melalui sistem.</p>
       <p style="font-size: 0.9em; color: #777;">Abaikan email ini jika Anda sudah melakukan pembayaran.</p>
     </div>
@@ -531,6 +542,29 @@ export const templatePemesananDibatalkanAdmin = (nama, kamar, catatanAdmin) => {
       <p>Status kamar Anda kini telah ditarik dan kembali tersedia untuk umum. Akun pendaftaran sementara Anda juga telah dihapus dari sistem kami.</p>
       <p>Jika Anda merasa ini adalah sebuah kesalahan, silakan lakukan pemesanan ulang melalui website kami dan pastikan Anda mentransfer sesuai nominal serta mengunggah bukti transaksi asli yang sah.</p>
       <p>Terima kasih.</p>
+    </div>
+  `;
+};
+
+export const templateHasilValidasiTagihan = (nama, bulanTagihan, status, catatan) => {
+  const isLunas = status === "disetujui";
+  const warnaStatus = isLunas ? "#28a745" : "#dc3545"; 
+  const teksStatus = isLunas ? "LUNAS / DISETUJUI" : "DITOLAK";
+  const teksCatatan = catatan ? `<p><strong>Catatan Admin:</strong> ${catatan}</p>` : "";
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
+      <h2 style="color: #333; text-align: center;">Hasil Validasi Pembayaran</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Pembayaran sewa kost Anda untuk tagihan bulan <strong>${bulanTagihan}</strong> telah diperiksa oleh Admin dengan hasil:</p>
+      <div style="text-align: center; margin: 20px 0;">
+        <span style="background-color: ${warnaStatus}; color: #fff; padding: 10px 20px; border-radius: 5px; font-weight: bold; font-size: 16px;">
+          ${teksStatus}
+        </span>
+      </div>
+      ${teksCatatan}
+      <p style="margin-top: 30px;">${isLunas ? 'Terima kasih telah membayar tepat waktu!' : 'Silakan perbaiki dan unggah ulang bukti pembayaran Anda melalui dashboard aplikasi.'}</p>
+      <p>Salam hangat,<br><strong>Admin Kost RumahKu</strong></p>
     </div>
   `;
 };

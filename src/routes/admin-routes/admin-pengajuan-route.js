@@ -6,8 +6,11 @@ import {
   rollbackPersetujuan,
   selesaikanPengajuan,
 } from "../../controllers/admin-controllers/admin-pengajuan-controller.js";
+import { verifikasiToken, otorisasiPeran } from "../../middlewares/auth-middleware.js";
 
 const router = express.Router();
+
+router.use(verifikasiToken, otorisasiPeran("admin", "pemilik"));
 
 router.get("/", getSemuaPengajuan);
 router.get("/:id", getDetailPengajuan);

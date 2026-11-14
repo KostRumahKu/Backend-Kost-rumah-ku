@@ -41,12 +41,13 @@ export const generateTagihanBulanan = async () => {
 
       const tagihanBaru = new Tagihan({
         "id-pengguna": penyewa._id,
+        "nama-penyewa": penyewa["nama-lengkap"],
         "id-kamar": kamar._id,
         "nomor-tagihan": nomorInvoice,
         "bulan-tagihan": namaBulanDepan,
         "jumlah-tagihan": kamar.harga,
         "tanggal-jatuh-tempo": jatuhTempo,
-        status: "belum-bayar"
+        status: "belum-bayar",
       });
 
       await tagihanBaru.save();
@@ -86,6 +87,10 @@ export const kirimPengingatTagihan = async (tipePengingat) => {
       subjek = `[PENTING H-1] Besok Batas Akhir Pembayaran Kost ${tagihan["bulan-tagihan"]}`;
     } else if (tipePengingat === "LATE") {
       subjek = `[TERLAMBAT] Tagihan Kost ${tagihan["bulan-tagihan"]} Telah Melewati Jatuh Tempo`;
+      tagihan.status = "terlambat";
+      await tagihan.save();
+      penyewa["status-akun"] = "ditangguhkan";
+      await penyewa.save();
     }
 
     kirimEmail({

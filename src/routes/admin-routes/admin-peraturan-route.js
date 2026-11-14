@@ -1,8 +1,10 @@
 import express from "express";
 import * as peraturanController from "../../controllers/admin-controllers/admin-peraturan-controller.js";
-import { AppError } from "../../errors.js";
+import { verifikasiToken, otorisasiPeran } from "../../middlewares/auth-middleware.js";
 
 const router = express.Router();
+
+router.use(verifikasiToken, otorisasiPeran("admin", "pemilik"));
 
 router.post("/", peraturanController.tambahPeraturan);
 router.get("/", peraturanController.ambilSemuaPeraturan);

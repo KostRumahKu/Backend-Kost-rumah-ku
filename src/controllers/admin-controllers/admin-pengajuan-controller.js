@@ -77,14 +77,27 @@ export const rollbackPersetujuan = async (req, res) => {
   });
 };
 
-export const selesaikanPengajuan = async (req, res) => {
-  const { idPengajuan } = req.params;
+export const selesaikanPengajuan = async (req, res, next) => {
+  try {
+    const { idPengajuan } = req.params;
+    
+    const hasilEksekusi = await adminPengajuanService.selesaikanPengajuan(idPengajuan);
 
-  const hasilEksekusi = await adminPengajuanService.selesaikanPengajuan(idPengajuan);
+    let pesanSukses = "Eksekusi pengajuan berhasil diselesaikan.";
+    
+    if (hasilEksekusi.refund > 0) {
+      pesanSukses += ` HARAP KEMBALIKAN SISA SEWA (REFUND) KEPADA PENYEWA SEBESAR: Rp ${hasilEksekusi.refund.toLocaleString("id-ID")}.`;
+    }
 
-  res.status(200).json({
-    status: "sukses",
-    pesan: "Eksekusi pengajuan berhasil diselesaikan. Database kamar dan tagihan telah diperbarui.",
-    data: hasilEksekusi
-  });
+    res.status(200).json({
+      status: "sukses",
+      pesan: pesanSukses,
+      data: {
+        pengajuan: hasilEksekusi.pengajuanUtama,
+        "total-refund": hasilEksekusi.refund
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 };

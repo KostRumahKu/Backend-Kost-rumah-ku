@@ -31,8 +31,8 @@ export const postValidasiBooking = async (req, res, next) => {
       kebutuhan_payload: kontrakAdminValidasiBooking
     });
   }
-  if (!statusValidasi || !["setujui", "tolak", "batal"].includes(statusValidasi)) {
-        throw new AppError("BAD_REQUEST", "Status validasi wajib diisi ('setujui' atau 'tolak').", {
+  if (!statusValidasi || !["disetujui", "ditolak", "batal"].includes(statusValidasi)) {
+        throw new AppError("BAD_REQUEST", "Status validasi wajib diisi ('disetujui' atau 'ditolak').", {
       kebutuhan_payload: kontrakAdminValidasiBooking
     });
   }
