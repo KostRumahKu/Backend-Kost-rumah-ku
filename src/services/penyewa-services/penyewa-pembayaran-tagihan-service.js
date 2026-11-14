@@ -141,7 +141,7 @@ export const bayarTagihan = async (idPengguna, payload) => {
   const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
   const linkDashboardAdmin = "https://admin.kostrumahku.com/tagihan"; 
 
-  const totalBayar = kamar.harga * jumlahBulan;
+  const totalBayar = daftarTagihanDiproses.reduce((acc, item) => acc + item["jumlah-tagihan"], 0);
 
   kirimEmail({
     to: emailAdmin,
