@@ -182,6 +182,8 @@ export const prosesValidasiBooking = async (idPemesanan, payload) => {
         "tanggal-jatuh-tempo": tglMulai,
         status: "lunas",
         "bukti-pembayaran": pesanan["bukti-pembayaran"],
+        "rekening-tujuan": pesanan["rekening-tujuan"] || null, 
+        "metode-pembayaran": pesanan["rekening-tujuan"] ? "Transfer / QRIS" : "Transfer"
       });
 
       await tagihanBaru.save({ session });

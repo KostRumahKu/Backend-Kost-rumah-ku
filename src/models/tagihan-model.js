@@ -15,6 +15,15 @@ const tagihanSchema = new mongoose.Schema({
     default: 'belum-bayar' 
   },
   'pembayaran-multi': { type: Boolean, default: false },
+  'rekening-tujuan': { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'RekeningKost', 
+    default: null 
+  },
+  'metode-pembayaran': { 
+    type: String, 
+    default: null 
+  },
   'catatan-admin': { type: String, default: null }
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 

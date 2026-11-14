@@ -5,7 +5,8 @@ import { AppError } from "../errors.js";
 export const generateInvoicePdfBuffer = async (idTagihan) => {
   const tagihan = await Tagihan.findById(idTagihan)
     .populate("id-pengguna", "nama-lengkap email nomor-telepon")
-    .populate("id-kamar", "nama-kamar tipe-kamar lantai");
+    .populate("id-kamar", "nama-kamar tipe-kamar lantai")
+    .populate("rekening-tujuan", "nama-bank nomor-rekening nama-pemilik jenis");
 
   if (!tagihan) {
     throw new AppError("NOT_FOUND", "Data tagihan tidak ditemukan.");
@@ -57,9 +58,35 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
         doc.text("Tanggal Lunas", 50, topGridY + 60).text(`: ${tglBayar}`, 130, topGridY + 60);
       }
 
-      const statusY = isLunas ? topGridY + 75 : topGridY + 60;
+      const rek = tagihan["rekening-tujuan"];
+      let infoPembayaran = "-";
+      if (rek) {
+        infoPembayaran = `${rek["nama-bank"]} (${rek["nomor-rekening"]} a.n ${rek["nama-pemilik"]})`;
+      } else if (tagihan["metode-pembayaran"]) {
+        infoPembayaran = tagihan["metode-pembayaran"];
+      } else if (isLunas) {
+        infoPembayaran = "Tunai / Terverifikasi Admin";
+      }
+
+      // Cetak di grid informasi tagihan (sesuaikan posisi Y agar rapi)
+      let currentLeftY = topGridY + 60;
+      if (isLunas) {
+        doc
+          .text("Tanggal Lunas", 50, currentLeftY)
+          .text(`: ${tglBayar}`, 130, currentLeftY);
+        currentLeftY += 15;
+      }
+
+      doc
+        .text("Metode Bayar", 50, currentLeftY)
+        .text(`: ${infoPembayaran}`, 130, currentLeftY, { width: 165 });
+
+      // Geser posisi Status ke bawah menyesuaikan tinggi teks Metode Bayar (antisipasi jika nama pemilik panjang)
+      const statusY = currentLeftY + (infoPembayaran.length > 28 ? 25 : 15);
       doc.font("Helvetica-Bold").text("Status", 50, statusY);
-      doc.fillColor(isLunas ? "green" : "red").text(`: ${tagihan.status.toUpperCase()}`, 130, statusY);
+      doc
+        .fillColor(isLunas ? "green" : "red")
+        .text(`: ${tagihan.status.toUpperCase()}`, 130, statusY);
       doc.fillColor("black");
 
       const rightColX = 300;
@@ -144,6 +171,7 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
 
       doc.fontSize(7).fillColor("#666666").text("Operasional: Sen - Sab (08:00 - 17:00 WIB)", boxX + 10, boxY + 90);
       doc.fillColor("black");
+      
 
       const rightNotesX = 305;
       doc.fontSize(10).font("Helvetica-Bold").text("Keterangan & Catatan:", rightNotesX, noteY);

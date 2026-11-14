@@ -1,6 +1,10 @@
 import * as adminTagihanService from "../../services/admin-services/admin-tagihan-service.js";
 import { AppError } from "../../errors.js";
-import { KontrakAdminTagihan } from "../../contracts/admin-tagihan-contract.js";
+import {
+  KontrakAdminTagihan,
+  kontrakAdminBalidasiPembayaran,
+  kontrakAdminBayarTunggakanManual,
+} from "../../contracts/admin-tagihan-contract.js";
 export const ambilSemuaTagihan = async (req, res, next) => {
   try {
     const data = await adminTagihanService.ambilSemuaTagihan(req.query);
@@ -51,18 +55,20 @@ export const cariTagihan = async (req, res, next) => {
 };
 
 export const validasiPembayaran = async (req, res, next) => {
-  try {
-    const { id } = req.params; // Menangkap ID Tagihan dari URL
+  const { id } = req.params; 
+  const dataPayload = req.body;
     const { "status-validasi": statusValidasi, "catatan-admin": catatanAdmin } =
-      req.body;
+      dataPayload ?? {};
 
     if (!statusValidasi) {
       throw new AppError(
         "BAD_REQUEST",
         "Status validasi wajib diisi ('disetujui' atau 'ditolak').",
+        { kebutuhan_payload: kontrakAdminBalidasiPembayaran },
       );
     }
 
+  try {
     const payload = {
       idTagihan: id,
       statusValidasi,
@@ -81,12 +87,11 @@ export const validasiPembayaran = async (req, res, next) => {
 };
 
 export const bayarTunggakanManual = async (req, res, next) => {
-  try {
-    const dataPayload = req.body;
+   const dataPayload = req.body;
     const {
-      idTagihanDasar,
-      jumlahBulan,
-      idRekening,
+      "id-tagihan-Dasar": idTagihanDasar,
+      "jumlah-bulan": jumlahBulan,
+      "id-rekening": idRekening,
       "catatan-admin": catatanAdmin,
     } = dataPayload ?? {};
 
@@ -94,8 +99,10 @@ export const bayarTunggakanManual = async (req, res, next) => {
       throw new AppError(
         "BAD_REQUEST",
         "ID Tagihan Dasar dan ID Rekening wajib diisi untuk pelunasan manual.",
+        { kebutuhan_payload: kontrakAdminBayarTunggakanManual },
       );
     }
+  try {
 
     const payload = {
       idTagihanDasar,

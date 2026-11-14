@@ -72,9 +72,30 @@ export const validasiPembayaran = async (payload) => {
 
   if (statusValidasi === "disetujui") {
     const urlBukti = tagihan["bukti-pembayaran"];
-    
+    const idPenyewa = tagihan["id-pengguna"]._id;
+
+    const tagihanAkanDilunasi = await Tagihan.find({
+      "id-pengguna": idPenyewa,
+      "bukti-pembayaran": urlBukti,
+      status: "menunggu-validasi"
+    });
+
+    if (tagihanAkanDilunasi.length === 0) {
+      throw new AppError("BAD_REQUEST", "Tidak ditemukan tagihan yang menunggu validasi.");
+    }
+
+    let totalPemasukan = 0;
+    const daftarBulan = [];
+    const idsTagihanTarget = [];
+
+    for (const t of tagihanAkanDilunasi) {
+      totalPemasukan += t["jumlah-tagihan"];
+      daftarBulan.push(t["bulan-tagihan"]);
+      idsTagihanTarget.push(t._id);
+    }
+
     await Tagihan.updateMany(
-      { "bukti-pembayaran": urlBukti, status: "menunggu-validasi" },
+      { _id: { $in: idsTagihanTarget } },
       { 
         $set: { 
           status: "lunas", 
@@ -83,22 +104,13 @@ export const validasiPembayaran = async (payload) => {
       }
     );
 
-    const tagihanLunasBarusan = await Tagihan.find({ "bukti-pembayaran": urlBukti, status: "lunas" });
-    let totalPemasukan = 0;
-    const daftarBulan = [];
-
-    for (const t of tagihanLunasBarusan) {
-      totalPemasukan += t["jumlah-tagihan"];
-      daftarBulan.push(t["bulan-tagihan"]);
-    }
-
     if (totalPemasukan > 0) {
       await new KasKost({
         "tipe-transaksi": "pemasukan",
         kategori: "pembayaran-sewa",
         nominal: totalPemasukan,
         keterangan: `Pembayaran sewa kamar dari ${tagihan["id-pengguna"]["nama-lengkap"]} untuk periode: ${daftarBulan.join(", ")}`,
-        "id-referensi": tagihan._id 
+        "id-referensi": tagihan._id
       }).save();
     }
 
@@ -106,10 +118,10 @@ export const validasiPembayaran = async (payload) => {
     kirimEmail({
       to: penyewa.email,
       subject: `[LUNAS] Pembayaran Tagihan Kost Disetujui`,
-      html: templateHasilValidasiTagihan(penyewa["nama-lengkap"], tagihan["bulan-tagihan"], "disetujui", catatanAdmin)
+      html: templateHasilValidasiTagihan(penyewa["nama-lengkap"], daftarBulan.join(", "), "disetujui", catatanAdmin)
     }).catch(err => console.error(`[MAIL ERROR] Gagal kirim email ACC ke penyewa:`, err.message));
 
-    return { pesan: "Pembayaran disetujui. Tagihan telah dilunaskan." };
+    return { pesan: `Pembayaran disetujui untuk ${idsTagihanTarget.length} tagihan (Rp ${totalPemasukan.toLocaleString("id-ID")}).` };
   } 
   
   else if (statusValidasi === "ditolak") {
@@ -150,6 +162,8 @@ export const validasiPembayaran = async (payload) => {
   throw new AppError("BAD_REQUEST", "Status validasi tidak dikenali. Gunakan 'disetujui' atau 'ditolak'.");
 };
 
+
+// untested
 export const bayarTunggakanManual = async (payload) => {
   const { idTagihanDasar, jumlahBulan = 1, idRekening, catatanAdmin } = payload;
 

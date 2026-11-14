@@ -374,13 +374,16 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
 
       const tagihanBaru = new Tagihan({
         "id-pengguna": penyewa._id,
+        "nama-penyewa": penyewa["nama-lengkap"],
         "id-kamar": idKamar,
         "nomor-tagihan": invoiceBulanan,
         "bulan-tagihan": namaBulanString,
         "jumlah-tagihan": hargaBulanan,
         "tanggal-jatuh-tempo": tanggalMulai,
         status: "lunas",
-        "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin"
+        "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin",
+        "rekening-tujuan": dataSewa["id-rekening"] || null,
+        "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
       });
       await tagihanBaru.save({ session });
 
@@ -526,6 +529,7 @@ if (!penyewa) {
 
   const tagihanBaru = new Tagihan({
     "id-pengguna": penyewa._id,
+    "nama-penyewa": penyewa["nama-lengkap"],
     "id-kamar": idKamar,
     "nomor-tagihan": nomorInvoice,
     "bulan-tagihan": namaBulan,
@@ -541,6 +545,9 @@ if (!penyewa) {
     "metode-pembayaran": dataSewa["metode-pembayaran"] || "tunai",
     status: "terverifikasi",
     "tanggal-bayar": tanggalSiklusSekarang,
+    "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin",
+    "rekening-tujuan": dataSewa["id-rekening"] || null,
+    "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
   });
   await pembayaranBaru.save();
   const kasMigrasi = new KasKost({

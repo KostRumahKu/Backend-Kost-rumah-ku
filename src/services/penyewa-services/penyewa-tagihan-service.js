@@ -7,7 +7,7 @@ import { AppError } from "../../errors.js";
 export const ambilRiwayatTagihan = async (idPengguna) => {
   const daftarTagihan = await Tagihan.find({ "id-pengguna": idPengguna })
     .populate("id-kamar", "nama-kamar tipe-kamar lantai")
-    .sort({ "dibuat-pada": -1 }); u
+    .sort({ "dibuat-pada": -1 });
 
   return daftarTagihan;
 };

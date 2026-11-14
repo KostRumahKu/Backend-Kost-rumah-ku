@@ -13,7 +13,8 @@ import RekeningKost from "../models/rekening-model.js";
 export const ambilDetailPemesananPublik = async (idPemesanan) => {
   const pesanan = await Pemesanan.findById(idPemesanan)
     .populate("id-pengguna", "nama-lengkap email nomor-telepon")
-    .populate("id-kamar", "nama-kamar tipe-kamar lantai harga");
+    .populate("id-kamar", "nama-kamar tipe-kamar lantai harga")
+    .populate("rekening-tujuan", "nama-bank nomor-rekening nama-pemilik jenis");
 
   if (!pesanan) {
     throw new AppError("NOT_FOUND", "Data pemesanan tidak ditemukan atau sudah kedaluwarsa.");
@@ -42,6 +43,7 @@ export const ambilDetailPemesananPublik = async (idPemesanan) => {
     "durasi-bulan": pesanan["durasi-bulan"],
     "total-tagihan": totalTagihan,
     "bukti-pembayaran": pesanan["bukti-pembayaran"] || null,
+    "rekening-dipilih": pesanan["rekening-tujuan"] || null,
     "opsi-pembayaran": daftarRekeningAman
   };
 };
@@ -151,7 +153,9 @@ export const prosesBookingKamar = async (payload) => {
 
   if (lantai > 3)
     throw new AppError("BAD_REQUEST", "Jumlah lantai yang di input melebihi batas maksimum 3 lantai.");
-
+  if ( tipeKamar == "tulip" && lantai == 1 ) {
+    throw new AppError("BAD_REQUEST", `tipe kamar ${tipeKamar} hanya ada di lantai 2`);
+  }
   if (!kamarLock) {
     throw new AppError("NOT_FOUND", `Maaf, kamar tipe ${tipeKamar} di lantai ${lantai} saat ini penuh atau baru saja didahului orang lain.`);
   }

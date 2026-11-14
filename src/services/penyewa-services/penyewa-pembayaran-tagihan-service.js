@@ -83,10 +83,12 @@ export const bayarTagihan = async (idPengguna, payload) => {
   tagihanDasar.status = "menunggu-validasi";
   tagihanDasar["bukti-pembayaran"] = buktiPembayaran;
   tagihanDasar["rekening-tujuan"] = idRekening;
+  tagihanDasar["metode-pembayaran"] = rekeningValid["nama-bank"];
   tagihanDasar["catatan-admin"] = null;
   await tagihanDasar.save();
 
   const daftarTagihanDiproses = [tagihanDasar];
+  const penyewa = await Pengguna.findById(idPengguna);
 
   if (jumlahBulan > 1) {
     for (let i = 1; i < jumlahBulan; i++) {
@@ -122,19 +124,20 @@ export const bayarTagihan = async (idPengguna, payload) => {
         "id-kamar": kamar._id,
         "nomor-tagihan": nomorBaru,
         "bulan-tagihan": bulanTargetStr,
-        "jumlah-tagihan": kamar.harga, 
+        "jumlah-tagihan": kamar.harga,
         "tanggal-jatuh-tempo": tglJatuhTempo,
         "bukti-pembayaran": buktiPembayaran,
         "rekening-tujuan": idRekening,
         status: "menunggu-validasi",
-        "pembayaran-multi": true, 
+        "pembayaran-multi": true,
+        "metode-pembayaran": rekeningValid["nama-bank"],
       });
 
       await tagihanBaru.save();
       daftarTagihanDiproses.push(tagihanBaru);
     }
   }
-  const penyewa = await Pengguna.findById(idPengguna);
+  
   const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
   const linkDashboardAdmin = "https://admin.kostrumahku.com/tagihan"; 
 
