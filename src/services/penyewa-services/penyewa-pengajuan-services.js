@@ -9,6 +9,7 @@ import {
   templateNotifikasiBatalKeAdmin,
 } from "../../utils/email-templates.js";
 import Kamar from "../../models/kamar-model.js"; 
+import { ADMIN_EMAIL } from "../../config/app-config.js";
 
 export const getRiwayatPengajuan = async (idPengguna) => {
   const riwayat = await Pengajuan.find({ "id-pengguna": idPengguna }).sort({
@@ -170,8 +171,6 @@ export const batalkanPengajuan = async (idPengguna, idPengajuan) => {
     const jenis = pengajuan["jenis-pengajuan"];
     const subjectUser = `[Dibatalkan] Pengajuan ${jenis === "berhenti-sewa" ? "Berhenti Sewa" : "Pindah Kamar"}`;
     const subjectAdmin = `[Penyewa Batal] Pengajuan dari Kamar ${pengajuan["id-kamar-sekarang"]}`;
-    const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
-
     kirimEmail({
       to: pengguna.email,
       subject: subjectUser,
@@ -179,7 +178,7 @@ export const batalkanPengajuan = async (idPengguna, idPengajuan) => {
     }).catch(err => console.error(`[MAIL ERROR] Gagal email batal ke penyewa:`, err.message));
 
     kirimEmail({
-      to: emailAdmin,
+      to: ADMIN_EMAIL,
       subject: subjectAdmin,
       html: templateNotifikasiBatalKeAdmin(pengguna["nama-lengkap"], pengajuan["id-kamar-sekarang"], jenis)
     }).catch(err => console.error(`[MAIL ERROR] Gagal email batal ke admin:`, err.message));

@@ -15,6 +15,7 @@ import {
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js"; 
 import mongoose from "mongoose"; 
 import KasKost from "../../models/kas-model.js";
+import { APP_URL } from "../../config/app-config.js";
 
 export const ambilDaftarPemesananAdmin = async (query) => {
   const { status, sort } = query;
@@ -70,7 +71,7 @@ export const prosesValidasiBooking = async (idPemesanan, payload) => {
    const pengguna = pesanan["id-pengguna"];
    const kamar = pesanan["id-kamar"];
 
-   const urlFrontendUpload = `http://localhost:5173/upload-bukti/${pesanan._id}`;
+   const urlFrontendUpload = `${APP_URL}/upload-bukti/${pesanan._id}`;
 
    const htmlDitolak = templatePembayaranDitolak(
      pengguna["nama-lengkap"],

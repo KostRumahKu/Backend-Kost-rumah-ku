@@ -7,6 +7,7 @@ import { kirimEmail } from "../../utils/mail-service.js";
 import { templateOtpGantiEmail } from "../../utils/email-templates.js";
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
+import { APP_NAME, DEFAULT_PROFILE_IMAGE_URL } from "../../config/app-config.js";
 
 export const ambilProfilDashboard = async (idPengguna) => {
   const profil = await Pengguna.findById(idPengguna)
@@ -121,7 +122,7 @@ export const hapusFotoPenyewa = async (idPengguna) => {
   const pengguna = await Pengguna.findById(idPengguna);
   if (!pengguna) throw new AppError("NOT_FOUND", "Pengguna tidak ditemukan.");
 
-  const defaultFoto = "https://uploader.danafxc.my.id/images/8c67c844-421b-470a-aa42-476429f8cce2.png";
+  const defaultFoto = DEFAULT_PROFILE_IMAGE_URL;
 
   if (pengguna["foto-profil"] === defaultFoto) {
     throw new AppError(
@@ -159,7 +160,7 @@ export const requestOtpGantiEmail = async (idPengguna, emailBaru) => {
 
   await kirimEmail({
     to: emailBaru,
-    subject: "Verifikasi Perubahan Email - KostRumahKu",
+    subject: `Verifikasi Perubahan Email - ${APP_NAME}`,
     html: templateOtpGantiEmail(pengguna["nama-lengkap"], otp)
   });
 };

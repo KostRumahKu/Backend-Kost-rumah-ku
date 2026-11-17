@@ -1,7 +1,13 @@
+import {
+  ADMIN_NAME,
+  APP_NAME,
+  APP_URL,
+} from "../config/app-config.js";
+
 export const baseHtml = (konten) => `
   <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
     <div style="background-color: #2563eb; padding: 24px; text-align: center;">
-      <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Kost RumahKu</h2>
+      <h2 style="color: #ffffff; margin: 0; font-size: 24px;">${APP_NAME}</h2>
     </div>
     
     <div style="padding: 32px 24px; color: #374151; background-color: #ffffff; line-height: 1.6;">
@@ -9,8 +15,8 @@ export const baseHtml = (konten) => `
     </div>
     
     <div style="background-color: #f3f4f6; padding: 16px; text-align: center; font-size: 12px; color: #6b7280;">
-      <p style="margin: 0;">Email ini dikirim secara otomatis oleh Sistem Kost RumahKu.</p>
-      <p style="margin: 4px 0 0 0;">&copy; ${new Date().getFullYear()} Kost RumahKu. All rights reserved.</p>
+      <p style="margin: 0;">Email ini dikirim secara otomatis oleh Sistem ${APP_NAME}.</p>
+      <p style="margin: 4px 0 0 0;">&copy; ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
     </div>
   </div>
 `;
@@ -18,7 +24,7 @@ export const baseHtml = (konten) => `
 export const templateAkunBaru = (nama, email, passwordAsli, nomorKamar) => {
   const konten = `
     <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}! 👋</h3>
-    <p>Selamat datang di Kost RumahKu. Admin baru saja mendaftarkan Anda sebagai penghuni untuk <b>Kamar ${nomorKamar}</b>.</p>
+    <p>Selamat datang di ${APP_NAME}. Admin baru saja mendaftarkan Anda sebagai penghuni untuk <b>Kamar ${nomorKamar}</b>.</p>
     <p>Untuk memudahkan Anda mengakses tagihan, melakukan pembayaran, dan melihat riwayat sewa, kami telah membuatkan akun aplikasi untuk Anda.</p>
     
     <div style="background-color: #f9fafb; border-left: 4px solid #2563eb; padding: 16px; margin: 24px 0; border-radius: 4px;">
@@ -29,7 +35,7 @@ export const templateAkunBaru = (nama, email, passwordAsli, nomorKamar) => {
     
     <p style="color: #dc2626; font-size: 13px;"><i>* PENTING: Harap segera ubah password Anda melalui menu pengaturan setelah berhasil login pertama kali.</i></p>
     
-    <p style="margin-top: 24px;">Terima kasih,<br><b>Admin Kost RumahKu</b></p>
+    <p style="margin-top: 24px;">Terima kasih,<br><b>${ADMIN_NAME}</b></p>
   `;
 
   return baseHtml(konten);
@@ -79,7 +85,7 @@ export const templatePindahKamar = (
     <p style="margin-bottom: 8px;"><b>Informasi Tagihan:</b></p>
     <p style="margin-top: 0; color: #4b5563;">Untuk siklus pembayaran bulan depan, tagihan Anda akan otomatis disesuaikan mengikuti harga kamar baru, yaitu sebesar <b>${hargaRupiah}</b>/bulan.</p>
     
-    <p style="margin-top: 24px;">Semoga Anda nyaman di kamar yang baru!<br><br>Terima kasih,<br><b>Admin Kost RumahKu</b></p>
+    <p style="margin-top: 24px;">Semoga Anda nyaman di kamar yang baru!<br><br>Terima kasih,<br><b>${ADMIN_NAME}</b></p>
   `;
 
   return baseHtml(konten);
@@ -88,7 +94,7 @@ export const templatePindahKamar = (
 export const templateCheckout = (nama, kamarAsli) => {
   const konten = `
     <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}! 🏠</h3>
-    <p>Terima kasih telah mempercayakan Kost RumahKu sebagai tempat hunian Anda.</p>
+    <p>Terima kasih telah mempercayakan ${APP_NAME} sebagai tempat hunian Anda.</p>
     
     <div style="background-color: #f9fafb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 4px;">
       <p style="margin: 0; color: #4b5563;">
@@ -100,13 +106,13 @@ export const templateCheckout = (nama, kamarAsli) => {
     <p>Kami harap Anda memiliki pengalaman yang menyenangkan dan berkesan selama tinggal di sini.</p>
     
     <p style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #e5e7eb;">
-      <b>Kangen dengan Kost RumahKu?</b><br>
+      <b>Kangen dengan ${APP_NAME}?</b><br>
       Jika di kemudian hari Anda membutuhkan hunian yang nyaman, aman, dan strategis kembali, pintu kami selalu terbuka! 
       Silakan kunjungi website kami untuk melihat ketersediaan kamar secara *real-time*:<br>
-      <a href="https://kostrumahku.com" style="display: inline-block; margin-top: 12px; padding: 10px 16px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Cek Ketersediaan Kamar</a>
+      <a href="${APP_URL}" style="display: inline-block; margin-top: 12px; padding: 10px 16px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Cek Ketersediaan Kamar</a>
     </p>
     
-    <p style="margin-top: 24px;">Sukses selalu untuk Anda!<br><b>Admin Kost RumahKu</b></p>
+    <p style="margin-top: 24px;">Sukses selalu untuk Anda!<br><b>${ADMIN_NAME}</b></p>
   `;
 
   return baseHtml(konten);
@@ -115,7 +121,7 @@ export const templateCheckout = (nama, kamarAsli) => {
 export const templateOTP = (nama, otp) => {
   const konten = `
     <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}! 🔐</h3>
-    <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun Kost RumahKu Anda.</p>
+    <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun ${APP_NAME} Anda.</p>
     
     <div style="background-color: #f9fafb; border-left: 4px solid #f59e0b; padding: 24px; margin: 24px 0; border-radius: 4px; text-align: center;">
       <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">KODE OTP ANDA:</p>
@@ -125,7 +131,7 @@ export const templateOTP = (nama, otp) => {
     <p style="color: #ef4444; font-size: 14px;"><b>⚠️ Penting:</b> Kode ini hanya berlaku selama <b>5 menit</b>. Jangan berikan kode ini kepada siapa pun, termasuk admin.</p>
     <p>Jika Anda tidak pernah meminta pengaturan ulang kata sandi, abaikan email ini.</p>
     <br>
-    <p>Terima kasih,<br><b>Admin Kost RumahKu</b></p>
+    <p>Terima kasih,<br><b>${ADMIN_NAME}</b></p>
   `;
   return baseHtml(konten);
 };
@@ -158,8 +164,8 @@ export const templateTagihanBaru = (
       <p style="margin: 0; color: #ef4444;"><b>Batas Pembayaran:</b> ${tglFormatted}</p>
     </div>
     
-    <p>Silakan melakukan pembayaran dan upload bukti transfer melalui aplikasi KostRumahKu sebelum tanggal jatuh tempo.</p>
-    <p style="margin-top: 24px;">Terima kasih,<br><b>Admin Kost RumahKu</b></p>
+    <p>Silakan melakukan pembayaran dan upload bukti transfer melalui aplikasi ${APP_NAME} sebelum tanggal jatuh tempo.</p>
+    <p style="margin-top: 24px;">Terima kasih,<br><b>${ADMIN_NAME}</b></p>
   `;
   return baseHtml(konten);
 };
@@ -180,7 +186,7 @@ export const templatePengumuman = (judul, pesan, gambarUrl) => {
       ${pesanFormat}
     </div>
     <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">
-      Pesan broadcast ini dikirimkan secara otomatis oleh sistem KostRumahKu.
+      Pesan broadcast ini dikirimkan secara otomatis oleh sistem ${APP_NAME}.
     </p>
   `;
   return baseHtml(konten);
@@ -189,7 +195,7 @@ export const templatePengumuman = (judul, pesan, gambarUrl) => {
 export const templateOtpGantiEmail = (nama, otp) => {
   const konten = `
     <h3 style="color: #111827; margin-top: 0;">Halo, ${nama}!</h3>
-    <p>Anda menerima email ini karena ada permintaan untuk mengubah alamat email pada akun KostRumahKu Anda.</p>
+    <p>Anda menerima email ini karena ada permintaan untuk mengubah alamat email pada akun ${APP_NAME} Anda.</p>
     
     <div style="background-color: #f3f4f6; text-align: center; padding: 16px; margin: 24px 0; border-radius: 8px;">
       <p style="margin: 0 0 8px 0; color: #4b5563; font-size: 14px;">Kode OTP Verifikasi Email Baru:</p>
@@ -220,7 +226,7 @@ export const templateNotifikasiKeluarAdmin = (
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #e74c3c;">[PENTING] ${judul} Hari Ini</h2>
-      <p>Halo Admin KostRumahKu,</p>
+      <p>Halo ${ADMIN_NAME},</p>
       
       <p>Ini adalah pengingat otomatis bahwa pada hari ini, <strong>${tanggalFormat}</strong>, terdapat jadwal eksekusi operasional:</p>
       
@@ -241,7 +247,7 @@ export const templateNotifikasiKeluarAdmin = (
         <a href="${urlDashboard}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Buka Dashboard Admin</a>
       </div>
       
-      <p>Sistem Manajemen KostRumahKu</p>
+      <p>Sistem Manajemen ${APP_NAME}</p>
     </div>
   `;
 };
@@ -267,7 +273,7 @@ export const templatePengajuanDibuat = (
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #2c3e50;">Pengajuan Anda Sedang Diproses</h2>
       <p>Halo <strong>${namaPenyewa}</strong>,</p>
-      <p>Kami telah menerima permohonan <strong>${jenisTeks}</strong> yang Anda ajukan melalui sistem KostRumahKu.</p>
+      <p>Kami telah menerima permohonan <strong>${jenisTeks}</strong> yang Anda ajukan melalui sistem ${APP_NAME}.</p>
       
       <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0;">
         <p style="margin: 0 0 10px 0;"><strong>Rincian Pengajuan:</strong></p>
@@ -281,7 +287,7 @@ export const templatePengajuanDibuat = (
       <p>Admin kami akan segera meninjau pengajuan ini. Anda akan menerima email pemberitahuan lebih lanjut apabila pengajuan ini telah disetujui atau ditolak.</p>
       <p>Jika Anda merasa tidak melakukan pengajuan ini atau ingin membatalkannya, segera masuk ke dashboard akun Anda.</p>
       
-      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+      <p>Terima kasih,<br><strong>Manajemen ${APP_NAME}</strong></p>
     </div>
   `;
 };
@@ -296,7 +302,7 @@ export const templatePembatalanOlehPenyewa = (namaPenyewa, jenisPengajuan) => {
       <p>Halo <strong>${namaPenyewa}</strong>,</p>
       <p>Sesuai permintaan Anda, sistem telah membatalkan pengajuan <strong>${jenisTeks}</strong> Anda yang sebelumnya berstatus Menunggu Konfirmasi.</p>
       <p>Anda saat ini tidak memiliki pengajuan aktif. Jika Anda berubah pikiran di kemudian hari, Anda dapat membuat pengajuan baru melalui dashboard akun Anda.</p>
-      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+      <p>Terima kasih,<br><strong>Manajemen ${APP_NAME}</strong></p>
     </div>
   `;
 };
@@ -376,7 +382,7 @@ export const templateHasilPengajuan = (
           : ""
       }
       
-      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+      <p>Terima kasih,<br><strong>Manajemen ${APP_NAME}</strong></p>
     </div>
   `;
 };
@@ -402,7 +408,7 @@ export const templateRollbackPersetujuan = (
 
       <p>Dengan pembatalan ini, status kamar dan kewajiban tagihan bulanan Anda akan dikembalikan seperti semula (aktif). Harap periksa kembali menu Tagihan di dashboard Anda jika sebelumnya ada tagihan yang sempat dibatalkan.</p>
       
-      <p>Terima kasih,<br><strong>Manajemen KostRumahKu</strong></p>
+      <p>Terima kasih,<br><strong>Manajemen ${APP_NAME}</strong></p>
     </div>
   `;
 };
@@ -421,12 +427,12 @@ export const templateBookingBerhasil = (
   });
   const formatHarga = Number(totalTagihan).toLocaleString("id-ID");
 
-  const urlBayar = `/api/public/booking/${idPemesanan}`; 
+  const urlBayar = `${APP_URL}/api/public/booking/${idPemesanan}`;
 
   return `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
       <h2>Halo ${nama}, Pesanan Kamar Anda Berhasil Dibuat!</h2>
-      <p>Terima kasih telah memesan kamar <b>${kamar}</b> di Kost RumahKu.</p>
+      <p>Terima kasih telah memesan kamar <b>${kamar}</b> di ${APP_NAME}.</p>
       <p>Agar pesanan Anda tidak dibatalkan otomatis oleh sistem, mohon segera selesaikan pembayaran sebesar:</p>
       <h3 style="color: #28a745;">Rp ${formatHarga}</h3>
       <p><b>Batas Waktu Pembayaran:</b><br/> <span style="color: #dc3545; font-weight: bold;">${formatTanggal} WIB</span></p>
@@ -501,9 +507,9 @@ export const templateSelamatDatangPenyewa = (
 ) => {
   return `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-      <h2 style="color: #28a745;">Selamat Datang di Kost RumahKu!</h2>
+      <h2 style="color: #28a745;">Selamat Datang di ${APP_NAME}!</h2>
       <p>Halo ${nama}, pembayaran Anda untuk kamar <b>${kamar}</b> telah berhasil divalidasi oleh Admin.</p>
-      <p>Mulai sekarang, Anda resmi menjadi bagian dari Kost RumahKu! Berikut adalah akses akun Anda untuk melihat tagihan dan mengajukan komplain/pindah kamar di sistem:</p>
+      <p>Mulai sekarang, Anda resmi menjadi bagian dari ${APP_NAME}! Berikut adalah akses akun Anda untuk melihat tagihan dan mengajukan komplain/pindah kamar di sistem:</p>
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
         <p style="margin: 0 0 10px 0;"><b>Email:</b> ${emailUser}</p>
         <p style="margin: 0;"><b>Password Sementara:</b> ${plainPassword}</p>
@@ -522,7 +528,7 @@ export const templateBookingBatalOtomatis = (nama, kamar) => {
       <p>Mohon maaf, batas waktu pembayaran untuk pemesanan kamar <b>${kamar}</b> telah habis.</p>
       <p>Sistem kami telah membatalkan pesanan Anda secara otomatis dan status kamar kembali tersedia untuk disewa oleh umum.</p>
       <p>Jika Anda masih berminat, silakan lakukan pemesanan ulang melalui website kami selama kamar masih tersedia.</p>
-      <p>Terima kasih atas ketertarikan Anda pada Kost RumahKu.</p>
+      <p>Terima kasih atas ketertarikan Anda pada ${APP_NAME}.</p>
     </div>
   `;
 };
@@ -532,7 +538,7 @@ export const templatePemesananDibatalkanAdmin = (nama, kamar, catatanAdmin) => {
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
       <h2 style="color: #dc3545;">Pemesanan Kamar Dibatalkan</h2>
       <p>Halo ${nama},</p>
-      <p>Mohon maaf, pemesanan Anda untuk kamar <b>${kamar}</b> telah <b>dibatalkan secara permanen</b> oleh Admin Kost RumahKu.</p>
+      <p>Mohon maaf, pemesanan Anda untuk kamar <b>${kamar}</b> telah <b>dibatalkan secara permanen</b> oleh ${ADMIN_NAME}.</p>
       
       <p><b>Alasan Pembatalan:</b></p>
       <blockquote style="border-left: 4px solid #dc3545; padding-left: 15px; margin: 15px 0; color: #555; font-style: italic;">
@@ -564,7 +570,7 @@ export const templateHasilValidasiTagihan = (nama, bulanTagihan, status, catatan
       </div>
       ${teksCatatan}
       <p style="margin-top: 30px;">${isLunas ? 'Terima kasih telah membayar tepat waktu!' : 'Silakan perbaiki dan unggah ulang bukti pembayaran Anda melalui dashboard aplikasi.'}</p>
-      <p>Salam hangat,<br><strong>Admin Kost RumahKu</strong></p>
+      <p>Salam hangat,<br><strong>${ADMIN_NAME}</strong></p>
     </div>
   `;
 };

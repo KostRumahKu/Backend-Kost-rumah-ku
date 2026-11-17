@@ -10,6 +10,11 @@ import {
   templateBookingBatalOtomatis,
 } from "../utils/email-templates.js";
 import Pemesanan from "../models/pemesanan-model.js";
+import {
+  ADMIN_EMAIL,
+  ADMIN_DASHBOARD_URL,
+  APP_NAME,
+} from "../config/app-config.js";
 
 // ===== H-10 =====
 export const generateTagihanBulanan = async () => {
@@ -126,9 +131,6 @@ export const notifikasiEksekusiHariIniAdmin = async () => {
     }).populate("id-pengguna", "nama-lengkap");
 
     if (daftarEksekusiHariIni.length > 0) {
-      const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
-      const urlDashboard = process.env.ADMIN_DASHBOARD_URL || "http://localhost:5173/admin/pengajuan";
-
       for (const pengajuan of daftarEksekusiHariIni) {
         const namaPenyewa = pengajuan["id-pengguna"]["nama-lengkap"];
         const jenis = pengajuan["jenis-pengajuan"];
@@ -144,9 +146,9 @@ export const notifikasiEksekusiHariIniAdmin = async () => {
           : `[PENTING] Jadwal Pindah Kamar Hari Ini: ${kamarLama} -> ${kamarBaru}`;
 
         await kirimEmail({
-          to: emailAdmin,
+          to: ADMIN_EMAIL,
           subject: subjekEmail,
-          html: templateNotifikasiKeluarAdmin(namaPenyewa, kamarLama, kamarBaru, jenis, tglFormat, urlDashboard)
+          html: templateNotifikasiKeluarAdmin(namaPenyewa, kamarLama, kamarBaru, jenis, tglFormat, ADMIN_DASHBOARD_URL)
         });
         
         console.log(`✅ [CRON] Email notifikasi eksekusi kamar ${kamarLama} terkirim ke Admin.`);
@@ -177,7 +179,7 @@ export const bersihkanPesananKadaluarsa = async () => {
          
          await kirimEmail({
            to: pengguna.email,
-           subject: "Pesanan Kamar Dibatalkan (Waktu Pembayaran Habis) - Kost RumahKu",
+           subject: `Pesanan Kamar Dibatalkan (Waktu Pembayaran Habis) - ${APP_NAME}`,
            html: htmlBatal
          }).catch(err => console.error(`[Cron] Gagal kirim email batal ke ${pengguna.email}:`, err));
       }

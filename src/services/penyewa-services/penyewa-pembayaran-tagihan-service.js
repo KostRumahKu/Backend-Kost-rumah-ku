@@ -5,6 +5,10 @@ import { kirimEmail } from "../../utils/mail-service.js";
 import { templateNotifikasiPembayaranBaru } from "../../utils/email-templates.js";
 import { AppError } from "../../errors.js";
 import RekeningKost from "../../models/rekening-model.js";
+import {
+  ADMIN_EMAIL,
+  ADMIN_TAGIHAN_URL,
+} from "../../config/app-config.js";
 
 const hitungBulanBerikutnya = (stringBulanTahun, tambahBulan) => {
   const namaBulanIndo = [
@@ -138,18 +142,15 @@ export const bayarTagihan = async (idPengguna, payload) => {
     }
   }
   
-  const emailAdmin = process.env.ADMIN_EMAIL || "admin@kostrumahku.com";
-  const linkDashboardAdmin = "https://admin.kostrumahku.com/tagihan"; 
-
   const totalBayar = daftarTagihanDiproses.reduce((acc, item) => acc + item["jumlah-tagihan"], 0);
 
   kirimEmail({
-    to: emailAdmin,
+    to: ADMIN_EMAIL,
     subject: `[Pembayaran Masuk] Rp ${totalBayar.toLocaleString("id-ID")} dari Kamar ${kamar["nama-kamar"]}`,
     html: templateNotifikasiPembayaranBaru(
       penyewa["nama-lengkap"],
       kamar["nama-kamar"],
-      linkDashboardAdmin,
+      ADMIN_TAGIHAN_URL,
     ),
   }).catch((err) =>
     console.error(
