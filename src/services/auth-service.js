@@ -5,6 +5,7 @@ import { AppError } from "../errors.js";
 import crypto from "crypto";
 import { kirimEmail } from "../utils/mail-service.js";
 import { templateOTP } from "../utils/email-templates.js";
+import { APP_NAME } from "../config/app-config.js";
 
 export const prosesLogin = async (email, kataSandi, peranYangDiharapkan) => {
   const pengguna = await Pengguna.findOne({ email, peran: peranYangDiharapkan });
@@ -42,7 +43,7 @@ export const mintaResetPassword = async (email) => {
   if (!pengguna) {
     throw new AppError(
       "USER_NOT_FOUND",
-      "Gagal! Email tersebut tidak terdaftar di sistem KostRumahKu.",
+      `Gagal! Email tersebut tidak terdaftar di sistem ${APP_NAME}.`,
     );
   }
 
@@ -56,7 +57,7 @@ export const mintaResetPassword = async (email) => {
 
   kirimEmail({
     to: pengguna.email,
-    subject: "Kode OTP Reset Password - Kost RumahKu",
+    subject: `Kode OTP Reset Password - ${APP_NAME}`,
     html: templateOTP(pengguna["nama-lengkap"], otp)
   }).catch(err => console.error("[MAIL ALERT] Gagal kirim OTP:", err.message));
 };

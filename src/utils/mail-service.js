@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { AppError } from "../errors.js";
+import { EMAIL_FROM_NAME } from "../config/app-config.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -9,7 +10,7 @@ const SENDER_EMAIL = process.env.SENDER_EMAIL;
 export const kirimEmail = async ({ to, subject, html }) => {
   try {
     const data = await resend.emails.send({
-      from: `Kost RumahKu <${SENDER_EMAIL}>`,
+      from: `${EMAIL_FROM_NAME} <${SENDER_EMAIL}>`,
       to: to,
       subject: subject,
       html: html,

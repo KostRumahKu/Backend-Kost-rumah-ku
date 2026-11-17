@@ -1,6 +1,17 @@
 import PDFDocument from "pdfkit";
 import Tagihan from "../models/tagihan-model.js"; 
 import { AppError } from "../errors.js";
+import {
+  ADMIN_NAME,
+  APP_NAME,
+  BUSINESS_ADDRESS,
+  BUSINESS_EMAIL,
+  BUSINESS_OPERATING_HOURS,
+  BUSINESS_PHONE,
+  BUSINESS_SOCIAL,
+  BUSINESS_WHATSAPP,
+  OWNER_EMAIL,
+} from "../config/app-config.js";
 
 export const generateInvoicePdfBuffer = async (idTagihan) => {
   const tagihan = await Tagihan.findById(idTagihan)
@@ -37,9 +48,9 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       
       const isLunas = tagihan.status === "lunas";
 
-      doc.fontSize(22).font("Helvetica-Bold").text("KOST RUMAHKU", 50, 50, { align: "right" });
-      doc.fontSize(10).font("Helvetica").text("Jl. Margonda Raya No. 100, Depok, Jawa Barat", { align: "right" });
-      doc.text("Telepon: +62 812-3456-7890 | Email: admin@kostrumahku.com", { align: "right" });
+      doc.fontSize(22).font("Helvetica-Bold").text(APP_NAME.toUpperCase(), 50, 50, { align: "right" });
+      doc.fontSize(10).font("Helvetica").text(BUSINESS_ADDRESS, { align: "right" });
+      doc.text(`Telepon: ${BUSINESS_PHONE} | Email: ${BUSINESS_EMAIL}`, { align: "right" });
       doc.moveDown(1.5);
 
       doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(1.5).stroke();
@@ -136,7 +147,7 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       doc.rect(boxX, boxY, boxWidth, boxHeight).fillAndStroke("#fafafa", "#e0e0e0");
       doc.fillColor("black");
 
-      doc.fontSize(9).font("Helvetica-Bold").text("Pusat Bantuan & Kontak Owner:", boxX + 10, boxY + 10);
+      doc.fontSize(9).font("Helvetica-Bold").text(`Pusat Bantuan & Kontak ${ADMIN_NAME}:`, boxX + 10, boxY + 10);
 
       const drawPhoneIcon = (x, y) => {
         doc.save().lineWidth(1).strokeColor("#2e7d32");
@@ -161,15 +172,18 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       };
 
       drawPhoneIcon(boxX + 10, boxY + 30);
-      doc.font("Helvetica").fontSize(8).text("WhatsApp: +62 812-3456-7890", boxX + 28, boxY + 31);
+      doc
+        .font("Helvetica")
+        .fontSize(8)
+        .text(`WhatsApp: ${BUSINESS_WHATSAPP}`, boxX + 28, boxY + 31);
 
       drawEmailIcon(boxX + 10, boxY + 50);
-      doc.font("Helvetica").fontSize(8).text("Email: owner@kostrumahku.com", boxX + 28, boxY + 51);
+      doc.font("Helvetica").fontSize(8).text(`Email: ${OWNER_EMAIL}`, boxX + 28, boxY + 51);
 
       drawWebIcon(boxX + 10, boxY + 70);
-      doc.font("Helvetica").fontSize(8).text("IG / Sosmed: @kostrumahku.official", boxX + 28, boxY + 71);
+      doc.font("Helvetica").fontSize(8).text(`IG / Sosmed: ${BUSINESS_SOCIAL}`, boxX + 28, boxY + 71);
 
-      doc.fontSize(7).fillColor("#666666").text("Operasional: Sen - Sab (08:00 - 17:00 WIB)", boxX + 10, boxY + 90);
+      doc.fontSize(7).fillColor("#666666").text(`Operasional: ${BUSINESS_OPERATING_HOURS}`, boxX + 10, boxY + 90);
       doc.fillColor("black");
       
 
@@ -178,7 +192,7 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       
       doc.font("Helvetica").fontSize(8.5);
       if (isLunas) {
-        doc.text("Pembayaran telah diverifikasi dan diterima oleh pengelola Kost RumahKu.", rightNotesX, noteY + 15, { width: 240 });
+        doc.text(`Pembayaran telah diverifikasi dan diterima oleh pengelola ${APP_NAME}.`, rightNotesX, noteY + 15, { width: 240 });
         doc.text("Terima kasih atas pembayaran Anda yang tepat waktu.", rightNotesX, noteY + 38, { width: 240 });
       } else {
         doc.text("Harap segera melakukan pembayaran sebelum tanggal jatuh tempo agar terhindar dari penangguhan akun.", rightNotesX, noteY + 15, { width: 240 });
@@ -188,7 +202,7 @@ export const generateInvoicePdfBuffer = async (idTagihan) => {
       doc.fontSize(8).fillColor("#888888");
       // doc.text(`System Ref ID: ${tagihan._id}`, 50, noteY + 60);
       doc.text(
-        "Dokumen ini diterbitkan secara elektronik oleh Sistem Manajemen Kost RumahKu dan bertindak sebagai bukti transaksi yang sah.", 
+        `Dokumen ini diterbitkan secara elektronik oleh Sistem Manajemen ${APP_NAME} dan bertindak sebagai bukti transaksi yang sah.`,
         50, 
         doc.page.height - 60, 
         { align: "center", width: 495 }

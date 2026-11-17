@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { DEFAULT_PROFILE_IMAGE_URL } from "../config/app-config.js";
 
 const penggunaSchema = new mongoose.Schema({
   '_id': { type: String, required: true },
@@ -30,7 +31,7 @@ const penggunaSchema = new mongoose.Schema({
   'email-baru-sementara': { type: String, default: null },
   'foto-profil': { 
     type: String, 
-    default: "https://uploader.danafxc.my.id/images/8c67c844-421b-470a-aa42-476429f8cce2.png" 
+    default: DEFAULT_PROFILE_IMAGE_URL
   },
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 

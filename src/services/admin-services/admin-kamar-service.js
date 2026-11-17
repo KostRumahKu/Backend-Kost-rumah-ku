@@ -13,6 +13,7 @@ import KasKost from "../../models/kas-model.js";
 
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js";
 import { AppError } from "../../errors.js";
+import { APP_NAME } from "../../config/app-config.js";
 
 export const tambahKamarBaru = async (dataKamar) => {
   const { lantai } = dataKamar;
@@ -474,7 +475,7 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
     if (isAkunBaru) {
       kirimEmail({
         to: penyewa.email,
-        subject: "Selamat Datang! Informasi Akun KostRumahKu",
+        subject: `Selamat Datang! Informasi Akun ${APP_NAME}`,
         html: templateAkunBaru(
           penyewa['nama-lengkap'],
           penyewa.email,
@@ -633,7 +634,7 @@ if (!penyewa) {
   if (isAkunBaru) {
     kirimEmail({
       to: penyewa.email,
-      subject: "Selamat Datang! Akses Akun KostRumahKu Anda",
+      subject: `Selamat Datang! Akses Akun ${APP_NAME} Anda`,
       html: templateAkunBaru(
         penyewa["nama-lengkap"],
         penyewa.email,

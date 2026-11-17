@@ -9,6 +9,7 @@ import {
 } from "../utils/email-templates.js";
 import { ambilDaftarRekening } from "./admin-services/admin-rekening-service.js";
 import RekeningKost from "../models/rekening-model.js";
+import { APP_NAME } from "../config/app-config.js";
 
 export const ambilDetailPemesananPublik = async (idPemesanan) => {
   const pesanan = await Pemesanan.findById(idPemesanan)
@@ -199,7 +200,7 @@ export const prosesBookingKamar = async (payload) => {
 
     await kirimEmail({
       to: email,
-      subject: "Pemesanan Kamar Berhasil - Kost RumahKu",
+      subject: `Pemesanan Kamar Berhasil - ${APP_NAME}`,
       html: htmlPendaftaran,
     }).catch((err) => console.error("Gagal kirim email pendaftaran:", err));
 
