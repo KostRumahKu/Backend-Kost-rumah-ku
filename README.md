@@ -9,9 +9,9 @@ bun install
 To run:
 
 ```bash
-bun run dev
-```
+bun run dev:bun/ npm run dev:node 
 
+```
 jangan lupa isi .env
 
 -- ini minimalis readme untuk sementara
