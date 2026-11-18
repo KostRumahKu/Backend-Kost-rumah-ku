@@ -3,7 +3,6 @@ import Pengguna from "../../models/pengguna-model.js";
 import RiwayatSewa from "../../models/riwayat-sewa-model.js";
 import Pemesanan from "../../models/pemesanan-model.js";
 import Tagihan from "../../models/tagihan-model.js";
-import Pembayaran from "../../models/pembayaran-model.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { kirimEmail } from "../../utils/mail-service.js";
@@ -263,6 +262,24 @@ export const resetKamar = async (
     }
 
     if (idsMasaDepan.length > 0) {
+      const agregasiKas = await KasKost.aggregate([
+        { $group: { _id: "$tipe-transaksi", total: { $sum: "$nominal" } } }
+      ]);
+      let pemasukan = 0;
+      let pengeluaran = 0;
+      for (const item of agregasiKas) {
+        if (item._id === "pemasukan") pemasukan = item.total;
+        if (item._id === "pengeluaran") pengeluaran = item.total;
+      }
+      const saldoKasSaatIni = pemasukan - pengeluaran;
+
+      if (saldoKasSaatIni < totalRefund) {
+        throw new AppError(
+          "BAD_REQUEST",
+          `Reset kamar ditolak! Penghuni memiliki sisa saldo sewa sebesar Rp ${totalRefund.toLocaleString("id-ID")} yang harus di-refund, namun saldo Kas Kost saat ini hanya Rp ${saldoKasSaatIni.toLocaleString("id-ID")}.`
+        );
+      }
+
       await Tagihan.updateMany(
         { _id: { $in: idsMasaDepan } },
         { status: "dibatalkan" },
@@ -272,6 +289,7 @@ export const resetKamar = async (
         "tipe-transaksi": "pengeluaran",
         kategori: "pengembalian-sewa",
         nominal: totalRefund,
+        keterangan: `Refund sisa sewa (Reset Kamar ${kamar["nama-kamar"] || idKamar}) untuk mantan penyewa ${penghuni["nama-lengkap"]}`,
         "tanggal-transaksi": tanggalEksekusi,
       }).save();
     }
@@ -455,15 +473,6 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
         "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
       });
       await tagihanBaru.save({ session });
-
-      const pembayaranBaru = new Pembayaran({
-        "id-tagihan": tagihanBaru._id,
-        "jumlah-bayar": hargaBulanan,
-        "metode-pembayaran": dataSewa["metode-pembayaran"] || "tunai",
-        status: "terverifikasi",
-        "tanggal-bayar": new Date(),
-      });
-      await pembayaranBaru.save({ session });
     }
 
     kamar.status = "terisi";
@@ -611,14 +620,6 @@ if (!penyewa) {
   });
   await tagihanBaru.save();
 
-  const pembayaranBaru = new Pembayaran({
-    "id-tagihan": tagihanBaru._id,
-    "jumlah-bayar": totalHarga,
-    "metode-pembayaran": dataSewa["metode-pembayaran"] || "tunai",
-    status: "terverifikasi",
-    "tanggal-bayar": tanggalSiklusSekarang,
-  });
-  await pembayaranBaru.save();
   const kasMigrasi = new KasKost({
     "tipe-transaksi": "pemasukan",
     kategori: "pembayaran-sewa",
@@ -671,12 +672,6 @@ if (!penyewa) {
       'jumlah-tagihan': hargaBulanan, 'tanggal-jatuh-tempo': tglLoop, 'status': 'lunas'
     });
     await tagihanHist.save();
-
-    const bayarHist = new Pembayaran({
-      'id-tagihan': tagihanHist._id, 'jumlah-bayar': hargaBulanan,
-      'metode-pembayaran': 'tunai', 'status': 'terverifikasi', 'tanggal-bayar': tglLoop
-    });
-    await bayarHist.save();
   }
   */
 
