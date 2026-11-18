@@ -1,13 +1,13 @@
 export const kontrakPublicBooking = {
-  "nama-lengkap": "string (wajib, nama lengkap calon penyewa)",
-  "email": "string (wajib, alamat email aktif untuk pengiriman tagihan & kredensial)",
-  "nomor-telepon": "string (wajib, nomor WhatsApp aktif)",
-  "nama-kontak-darurat": "string (wajib, nama wali/orang tua)",
-  "nomor-kontak-darurat": "string (wajib, nomor telepon darurat)",
-  "tipe-kamar": "string (wajib, pilihan: 'teratai' atau 'tulip')",
-  "lantai": "angka (wajib, pilihan lantai kamar, misal: 1, 2, atau 3)", 
-  "durasi-bulan": "angka (wajib, lama sewa dalam bulan, minimal 1)",
-  "tanggal-mulai": "tanggal (wajib, format YYYY-MM-DD, estimasi masuk kost)"
+  "nama-lengkap": "String (Wajib)",
+  "email": "String (Wajib, format email yang valid)",
+  "nomor-telepon": "String (Wajib)",
+  "nama-kontak-darurat": "String (Wajib)",
+  "nomor-kontak-darurat": "String (Wajib)",
+  "tipe-kamar": "String (Wajib: 'standart' [lantai 1-3], 'tulip' [khusus lantai 2], atau 'amarilis' [khusus lantai 3])",
+  "lantai": "Number (Wajib: 1, 2, atau 3)",
+  "durasi-bulan": "Number (Wajib, minimal 1)",
+  "tanggal-mulai": "Date (Wajib, format ISO 8601)"
 };
 
 export const kontrakPublicUploadBukti = {

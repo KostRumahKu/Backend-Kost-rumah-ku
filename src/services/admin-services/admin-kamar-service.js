@@ -9,7 +9,7 @@ import { kirimEmail } from "../../utils/mail-service.js";
 import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../../utils/email-templates.js";
 import mongoose from "mongoose";
 import KasKost from "../../models/kas-model.js";
-
+import RekeningKost from "../../models/rekening-model.js";
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js";
 import { AppError } from "../../errors.js";
 import { APP_NAME } from "../../config/app-config.js";
@@ -24,7 +24,64 @@ export const tambahKamarBaru = async (dataKamar) => {
     );
   }
 
-  const kamarTerakhir = await Kamar.findOne({ lantai: lantai }).sort({
+  const lantaiAngka = Number(lantai);
+  if (!Number.isInteger(lantaiAngka) || lantaiAngka < 1 || lantaiAngka > 3) {
+    throw new AppError(
+      "KAMAR_INVALID_FLOOR",
+      "Lantai harus berupa angka bulat antara 1 sampai 3.",
+    );
+  }
+
+  if (!dataKamar["tipe-kamar"]) {
+    throw new AppError(
+      "KAMAR_TYPE_REQUIRED",
+      "Tipe kamar wajib diisi ('standart', 'tulip', atau 'amarilis').",
+    );
+  }
+
+  const tipeNormalized = dataKamar["tipe-kamar"].toLowerCase().trim();
+  const daftarTipeValid = ["standart", "tulip", "amarilis"];
+
+  if (!daftarTipeValid.includes(tipeNormalized)) {
+    throw new AppError(
+      "KAMAR_INVALID_TYPE",
+      "Tipe kamar harus 'standart', 'tulip', atau 'amarilis'.",
+    );
+  }
+
+  if (tipeNormalized === "tulip" && lantaiAngka !== 2) {
+    throw new AppError(
+      "KAMAR_INVALID_FLOOR_TYPE",
+      "Kamar tipe 'tulip' hanya diperbolehkan berada di lantai 2.",
+    );
+  }
+
+  if (tipeNormalized === "amarilis" && lantaiAngka !== 3) {
+    throw new AppError(
+      "KAMAR_INVALID_FLOOR_TYPE",
+      "Kamar tipe 'amarilis' hanya diperbolehkan berada di lantai 3.",
+    );
+  }
+
+  const batasKuota = {
+    standart: 56,
+    tulip: 2,
+    amarilis: 2,
+  };
+
+  const jumlahKamarTipeIni = await Kamar.countDocuments({
+    "tipe-kamar": tipeNormalized,
+    diarsipkan: { $ne: true },
+  });
+
+  if (jumlahKamarTipeIni >= batasKuota[tipeNormalized]) {
+    throw new AppError(
+      "KAMAR_QUOTA_EXCEEDED",
+      `Gagal! Kuota maksimal untuk kamar tipe '${tipeNormalized}' (${batasKuota[tipeNormalized]} kamar) sudah penuh.`,
+    );
+  }
+
+  const kamarTerakhir = await Kamar.findOne({ lantai: lantaiAngka }).sort({
     _id: -1,
   });
 
@@ -32,28 +89,31 @@ export const tambahKamarBaru = async (dataKamar) => {
   if (kamarTerakhir) {
     idBaru = kamarTerakhir._id + 1;
   } else {
-    idBaru = lantai * 1000 + 1;
+    idBaru = lantaiAngka * 1000 + 1;
   }
 
-  if (
-    dataKamar["tipe-kamar"] &&
-    !["ekonomi", "eksekutif"].includes(dataKamar["tipe-kamar"])
-  ) {
-    throw new AppError(
-      "KAMAR_INVALID_TYPE",
-      "Tipe kamar harus 'ekonomi' atau 'eksekutif'",
-    );
-  }
+  let fotoFinal = Array.isArray(dataKamar.foto) ? dataKamar.foto : [];
+  if (fotoFinal.length === 0) {
+    const kamarContohTipeSama = await Kamar.findOne({
+      "tipe-kamar": tipeNormalized,
+      foto: { $exists: true, $not: { $size: 0 } },
+    }).lean();
 
-  if (dataKamar["harga"] && dataKamar["harga"] < 0) {
-    throw new AppError("KAMAR_INVALID_PRICE", "Harga kamar tidak boleh negatif");
+    if (kamarContohTipeSama) {
+      fotoFinal = kamarContohTipeSama.foto;
+    }
   }
 
   const payloadKamar = {
     ...dataKamar,
     _id: idBaru,
+    lantai: lantaiAngka,
+    "tipe-kamar": tipeNormalized,
     "nama-kamar": dataKamar["nama-kamar"] || idBaru.toString(),
+    foto: fotoFinal,
   };
+
+  delete payloadKamar.harga;
 
   const kamarBaru = new Kamar(payloadKamar);
   return await kamarBaru.save();
@@ -134,7 +194,6 @@ export const ambilDetailKamar = async (idKamar) => {
 
   return kamar;
 };
-
 export const ubahDataKamar = async (idKamar, dataUpdate) => {
   const kamarSaatIni = await Kamar.findById(idKamar);
   if (!kamarSaatIni) {
@@ -162,18 +221,17 @@ export const ubahDataKamar = async (idKamar, dataUpdate) => {
   delete dataUpdate.diarsipkan;
   delete dataUpdate["tipe-kamar"]; 
 
-  // if (dataUpdate['tipe-kamar']) {
-  //   const tipeBaru = dataUpdate['tipe-kamar'].toLowerCase();
-  //   if (tipeBaru === 'teratai') {
-  //     dataUpdate.harga = 300000;
-  //   } else if (tipeBaru === 'tulip') {
-  //     dataUpdate.harga = 500000;
-  //   }
-  // }
   const kamarDiperbarui = await Kamar.findByIdAndUpdate(idKamar, dataUpdate, {
     new: true,
     runValidators: true,
   });
+
+  if (Array.isArray(dataUpdate.foto)) {
+    await Kamar.updateMany(
+      { "tipe-kamar": kamarSaatIni["tipe-kamar"] },
+      { $set: { foto: dataUpdate.foto } }
+    );
+  }
 
   return kamarDiperbarui;
 };
@@ -391,6 +449,18 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
   if (cekTelepon && (!penyewa || cekTelepon._id.toString() !== penyewa._id.toString())) {
     throw new AppError("CONFLICT", "Nomor telepon sudah digunakan oleh penyewa lain!");
   }
+  const metodeBayar = dataSewa["metode-pembayaran"].toLowerCase().trim();
+  let rekeningValid = null;
+
+  if (metodeBayar === "transfer") {
+    rekeningValid = await RekeningKost.findById(dataSewa["id-rekening"]);
+    if (!rekeningValid) {
+      throw new AppError("NOT_FOUND", "Rekening tujuan yang dipilih tidak ditemukan di sistem.");
+    }
+    if (rekeningValid.status !== "aktif") {
+      throw new AppError("CONFLICT", "Rekening tujuan tersebut sedang tidak aktif.");
+    }
+  }
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -468,9 +538,11 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
         "jumlah-tagihan": hargaBulanan,
         "tanggal-jatuh-tempo": tanggalMulai,
         status: "lunas",
-        "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin",
-        "rekening-tujuan": dataSewa["id-rekening"] || null,
-        "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
+        "bukti-pembayaran": rekeningValid
+          ? `Transfer ke ${rekeningValid["nama-bank"]} (Input Admin)`
+          : "Pembayaran Tunai ke Admin",
+        "rekening-tujuan": rekeningValid ? rekeningValid._id : null,
+        "metode-pembayaran": rekeningValid ? rekeningValid["nama-bank"] : "Tunai",
       });
       await tagihanBaru.save({ session });
     }

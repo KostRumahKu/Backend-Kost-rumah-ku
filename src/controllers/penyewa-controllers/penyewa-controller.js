@@ -1,6 +1,7 @@
 import * as penyewaService from "../../services/penyewa-services/penyewa-service";
 import { kontrakPenyewaUpdateProfil, kontrakPenyewaMintaGantiEmail, kontrakPenyewaKonfirmasiEmailDanaOtp, kontrakPenyewaGantiPassword } from "../../contracts/penyewa-contract"
 import { AppError } from "../../errors.js";
+import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
 
 
 export const getDashboardPenyewa = async (req, res) => {
@@ -63,6 +64,25 @@ export const updateProfilPenyewa = async (req, res) => {
       }
     }
     
+    const teleponBaku = normalisasiNomorHP(
+      dataUpdate["nomor-telepon"],
+      "Nomor telepon",
+    );
+    const daruratBaku = normalisasiNomorHP(
+      dataUpdate["nomor-kontak-darurat"],
+      "Nomor kontak darurat",
+    );
+
+    if (teleponBaku === daruratBaku) {
+      throw new AppError(
+        "BAD_REQUEST",
+        "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
+      );
+    }
+
+    dataUpdate["nomor-telepon"] = teleponBaku;
+    dataUpdate["nomor-kontak-darurat"] = daruratBaku;
+
   await penyewaService.ubahProfilPenyewa(idPengguna, dataUpdate);
   
   res.status(200).json({

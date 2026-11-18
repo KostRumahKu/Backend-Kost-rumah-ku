@@ -10,6 +10,7 @@ import {
   kontrakPublicBooking,
   kontrakPublicUploadBukti,
 } from "../../contracts/public-booking-contract.js";
+import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
 
 
 export const getKamarPublikData = async (req, res) => {
@@ -75,6 +76,19 @@ export const postBookingKamar = async (req, res, next) => {
         kebutuhan_payload: kontrakPublicBooking
       });
     }
+    
+    const teleponBaku = normalisasiNomorHP(nomorTelepon, "Nomor telepon");
+    const daruratBaku = normalisasiNomorHP(nomorKontakDarurat, "Nomor kontak darurat");
+
+    if (teleponBaku === daruratBaku) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
+    );
+  }
+
+  dataPayload["nomor-telepon"] = teleponBaku;
+  dataPayload["nomor-kontak-darurat"] = daruratBaku;
   
   try {
     const hasilBooking = await prosesBookingKamar(req.body);

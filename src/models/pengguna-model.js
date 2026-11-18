@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { DEFAULT_PROFILE_IMAGE_URL } from "../config/app-config.js";
+import { normalisasiNomorHP } from "../utils/validasi-format-nomor-hp";
 
 const penggunaSchema = new mongoose.Schema({
   '_id': { type: String, required: true },
@@ -35,6 +36,33 @@ const penggunaSchema = new mongoose.Schema({
   },
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
+});
+
+penggunaSchema.pre("validate", function () {
+  if (this["nomor-telepon"]) {
+    this["nomor-telepon"] = normalisasiNomorHP(
+      this["nomor-telepon"],
+      "Nomor telepon",
+    );
+  }
+
+  if (this["nomor-kontak-darurat"]) {
+    this["nomor-kontak-darurat"] = normalisasiNomorHP(
+      this["nomor-kontak-darurat"],
+      "Nomor kontak darurat",
+    );
+  }
+
+  if (
+    this["nomor-telepon"] &&
+    this["nomor-kontak-darurat"] &&
+    this["nomor-telepon"] === this["nomor-kontak-darurat"]
+  ) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
+    );
+  }
 });
 
 export default mongoose.model('Pengguna', penggunaSchema);

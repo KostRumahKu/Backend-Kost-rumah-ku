@@ -133,6 +133,38 @@ export const prosesBookingKamar = async (payload) => {
     "tanggal-mulai": tanggalMulai,
   } = payload;
 
+  const tipeNormalized = tipeKamar.toLowerCase().trim();
+  const lantaiAngka = Number(lantai);
+  const daftarTipeValid = ["standart", "tulip", "amarilis"];
+
+  if (!daftarTipeValid.includes(tipeNormalized)) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Tipe kamar tidak valid. Pilih 'standart', 'tulip', atau 'amarilis'."
+    );
+  }
+
+  if (!Number.isInteger(lantaiAngka) || lantaiAngka < 1 || lantaiAngka > 3) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Jumlah lantai yang diinput tidak valid (harus lantai 1 sampai 3)."
+    );
+  }
+
+  if (tipeNormalized === "tulip" && lantaiAngka !== 2) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Tipe kamar 'tulip' hanya tersedia di lantai 2."
+    );
+  }
+
+  if (tipeNormalized === "amarilis" && lantaiAngka !== 3) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Tipe kamar 'amarilis' hanya tersedia di lantai 3."
+    );
+  }
+
   const cekPengguna = await Pengguna.findOne({
     $or: [{ email }, { "nomor-telepon": nomorTelepon }]
   });
@@ -143,8 +175,8 @@ export const prosesBookingKamar = async (payload) => {
 
   const kamarLock = await Kamar.findOneAndUpdate(
     { 
-      "tipe-kamar": tipeKamar.toLowerCase(), 
-      lantai: Number(lantai), 
+      "tipe-kamar": tipeNormalized, 
+      lantai: lantaiAngka, 
       status: "kosong", 
       diarsipkan: { $ne: true } 
     },
@@ -152,13 +184,8 @@ export const prosesBookingKamar = async (payload) => {
     { new: true }
   );
 
-  if (lantai > 3)
-    throw new AppError("BAD_REQUEST", "Jumlah lantai yang di input melebihi batas maksimum 3 lantai.");
-  if ( tipeKamar == "tulip" && lantai == 1 ) {
-    throw new AppError("BAD_REQUEST", `tipe kamar ${tipeKamar} hanya ada di lantai 2`);
-  }
   if (!kamarLock) {
-    throw new AppError("NOT_FOUND", `Maaf, kamar tipe ${tipeKamar} di lantai ${lantai} saat ini penuh atau baru saja didahului orang lain.`);
+    throw new AppError("NOT_FOUND", `Maaf, kamar tipe ${tipeNormalized} di lantai ${lantaiAngka} saat ini penuh atau baru saja didahului orang lain.`);
   }
 
   try {
