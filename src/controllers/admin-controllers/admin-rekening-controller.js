@@ -28,6 +28,7 @@ export const postTambahRekening = async (req, res, next) => {
       "nama-bank": namaBank,
       "nama-pemilik": namaPemilik,
       "nomor-rekening": nomorRekening,
+      "foto-qris": fotoQris,
       jenis,
     } = dataPayload ?? {};
 
@@ -40,6 +41,13 @@ export const postTambahRekening = async (req, res, next) => {
          },
        );
      }
+
+     if (jenis == "qris" || !fotoQris) {
+      throw new AppError(
+         "BAD_REQUEST",
+         "Jika jenis qris harus melampirkan foto-qris",
+      )
+     } 
     
   try {
     const rekeningBaru = await tambahRekeningBaru(req.body);
