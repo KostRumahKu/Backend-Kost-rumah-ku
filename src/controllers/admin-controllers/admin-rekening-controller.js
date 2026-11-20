@@ -4,7 +4,10 @@ import {
   perbaruiRekening,
   hapusRekening,
 } from "../../services/admin-services/admin-rekening-service.js";
-import { kontrakAdminRekening } from "../../contracts/admin-rekening-contract.js";
+import {
+  kontrakAdminRekening,
+  kontrakAdminUbahRekening,
+} from "../../contracts/admin-rekening-contract.js";
 import { AppError } from "../../errors.js";
 
 export const getDaftarRekeningAdmin = async (req, res, next) => {
@@ -63,6 +66,22 @@ export const postTambahRekening = async (req, res, next) => {
 };
 
 export const putEditRekening = async (req, res, next) => {
+  const dataPayload = req.body;
+  if (
+      !dataPayload ||
+      typeof dataPayload !== "object" ||
+      Array.isArray(dataPayload) ||
+      Object.keys(dataPayload).length === 0
+    ) {
+      throw new AppError(
+        "BAD_REQUEST",
+        "Minimal kirimkan satu field yang ingin diperbarui.",
+        {
+          kebutuhan_payload: kontrakAdminUbahRekening,
+          API_note: "Cukup kirim field yang mau diganti saja",
+        },
+      );
+    }
   try {
     const idRekening = req.params.id;
     const rekeningUpdate = await perbaruiRekening(idRekening, req.body);
