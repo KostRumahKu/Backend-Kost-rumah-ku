@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { DEFAULT_PROFILE_IMAGE_URL } from "../config/app-config.js";
 import { normalisasiNomorHP } from "../utils/validasi-format-nomor-hp";
+import { AppError } from "../errors.js";
 
 const penggunaSchema = new mongoose.Schema({
   '_id': { type: String, required: true },
