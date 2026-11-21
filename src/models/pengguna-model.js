@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import { DEFAULT_PROFILE_IMAGE_URL } from "../config/app-config.js";
+import { normalisasiNomorHP } from "../utils/validasi-format-nomor-hp";
+import { AppError } from "../errors.js";
 
 const penggunaSchema = new mongoose.Schema({
   '_id': { type: String, required: true },
@@ -9,6 +12,11 @@ const penggunaSchema = new mongoose.Schema({
     type: String, 
     enum: ['pemilik', 'admin', 'penyewa', 'calon-penyewa'], 
     default: 'calon-penyewa' 
+  },
+  'status-akun': {
+    type: String,
+    enum: ['aktif', 'ditangguhkan'],
+    default: 'aktif'
   },
   'nomor-telepon': { type: String, required: true, unique: true },
   'nama-kontak-darurat': { type: String, required: true },
@@ -22,12 +30,40 @@ const penggunaSchema = new mongoose.Schema({
   'tanggal-berakhir': { type: Date },
   'otp-reset': { type: String, default: null },
   'otp-kedaluwarsa': { type: Date, default: null },
+  'email-baru-sementara': { type: String, default: null },
   'foto-profil': { 
     type: String, 
-    default: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg" 
+    default: DEFAULT_PROFILE_IMAGE_URL
   },
 }, { 
   timestamps: { createdAt: 'dibuat-pada', updatedAt: 'diperbarui-pada' } 
+});
+
+penggunaSchema.pre("validate", function () {
+  if (this["nomor-telepon"]) {
+    this["nomor-telepon"] = normalisasiNomorHP(
+      this["nomor-telepon"],
+      "Nomor telepon",
+    );
+  }
+
+  if (this["nomor-kontak-darurat"]) {
+    this["nomor-kontak-darurat"] = normalisasiNomorHP(
+      this["nomor-kontak-darurat"],
+      "Nomor kontak darurat",
+    );
+  }
+
+  if (
+    this["nomor-telepon"] &&
+    this["nomor-kontak-darurat"] &&
+    this["nomor-telepon"] === this["nomor-kontak-darurat"]
+  ) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
+    );
+  }
 });
 
 export default mongoose.model('Pengguna', penggunaSchema);

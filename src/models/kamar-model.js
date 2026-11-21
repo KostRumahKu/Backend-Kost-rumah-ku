@@ -5,7 +5,7 @@ const kamarSchema = new mongoose.Schema({
   'nama-kamar': { type: String, required: true },
   'tipe-kamar': { 
     type: String, 
-    enum: ['teratai', 'tulip'],
+    enum: ['standart', 'tulip', 'amarilis'],
     required: true 
   },
   'harga': { type: Number }, 
@@ -19,10 +19,12 @@ const kamarSchema = new mongoose.Schema({
 
 kamarSchema.pre('save', function() {
   const tipe = this['tipe-kamar'].toLowerCase();
-  if (tipe === 'teratai' || tipe === 'ekonomi') {
+  if (tipe === 'standart') {
     this.harga = 300000;
-  } else if (tipe === 'tulip' || tipe === 'eksekutif') {
-    this.harga = 500000;
+  } else if (tipe === 'tulip') {
+    this.harga = 1000000;
+  } else if (tipe === 'amarilis') {
+    this.harga = 2000000;
   }
 });
 

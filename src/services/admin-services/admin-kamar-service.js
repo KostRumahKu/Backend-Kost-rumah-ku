@@ -3,17 +3,17 @@ import Pengguna from "../../models/pengguna-model.js";
 import RiwayatSewa from "../../models/riwayat-sewa-model.js";
 import Pemesanan from "../../models/pemesanan-model.js";
 import Tagihan from "../../models/tagihan-model.js";
-import Pembayaran from "../../models/pembayaran-model.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { kirimEmail } from "../../utils/mail-service.js";
 import { templateAkunBaru, templatePindahKamar, templateCheckout } from "../../utils/email-templates.js";
-
-
+import mongoose from "mongoose";
+import KasKost from "../../models/kas-model.js";
+import RekeningKost from "../../models/rekening-model.js";
 import { generateIdPengguna } from "../penyewa-services/pengguna-service.js";
 import { AppError } from "../../errors.js";
-// ============== Fungsi Service untuk Admin/Pemilik ==============
-// ============= FUNGSI MMEBUAT KAMAR BARU ==============
+import { APP_NAME } from "../../config/app-config.js";
+
 export const tambahKamarBaru = async (dataKamar) => {
   const { lantai } = dataKamar;
 
@@ -24,7 +24,64 @@ export const tambahKamarBaru = async (dataKamar) => {
     );
   }
 
-  const kamarTerakhir = await Kamar.findOne({ lantai: lantai }).sort({
+  const lantaiAngka = Number(lantai);
+  if (!Number.isInteger(lantaiAngka) || lantaiAngka < 1 || lantaiAngka > 3) {
+    throw new AppError(
+      "KAMAR_INVALID_FLOOR",
+      "Lantai harus berupa angka bulat antara 1 sampai 3.",
+    );
+  }
+
+  if (!dataKamar["tipe-kamar"]) {
+    throw new AppError(
+      "KAMAR_TYPE_REQUIRED",
+      "Tipe kamar wajib diisi ('standart', 'tulip', atau 'amarilis').",
+    );
+  }
+
+  const tipeNormalized = dataKamar["tipe-kamar"].toLowerCase().trim();
+  const daftarTipeValid = ["standart", "tulip", "amarilis"];
+
+  if (!daftarTipeValid.includes(tipeNormalized)) {
+    throw new AppError(
+      "KAMAR_INVALID_TYPE",
+      "Tipe kamar harus 'standart', 'tulip', atau 'amarilis'.",
+    );
+  }
+
+  if (tipeNormalized === "tulip" && lantaiAngka !== 2) {
+    throw new AppError(
+      "KAMAR_INVALID_FLOOR_TYPE",
+      "Kamar tipe 'tulip' hanya diperbolehkan berada di lantai 2.",
+    );
+  }
+
+  if (tipeNormalized === "amarilis" && lantaiAngka !== 3) {
+    throw new AppError(
+      "KAMAR_INVALID_FLOOR_TYPE",
+      "Kamar tipe 'amarilis' hanya diperbolehkan berada di lantai 3.",
+    );
+  }
+
+  const batasKuota = {
+    standart: 56,
+    tulip: 2,
+    amarilis: 2,
+  };
+
+  const jumlahKamarTipeIni = await Kamar.countDocuments({
+    "tipe-kamar": tipeNormalized,
+    diarsipkan: { $ne: true },
+  });
+
+  if (jumlahKamarTipeIni >= batasKuota[tipeNormalized]) {
+    throw new AppError(
+      "KAMAR_QUOTA_EXCEEDED",
+      `Gagal! Kuota maksimal untuk kamar tipe '${tipeNormalized}' (${batasKuota[tipeNormalized]} kamar) sudah penuh.`,
+    );
+  }
+
+  const kamarTerakhir = await Kamar.findOne({ lantai: lantaiAngka }).sort({
     _id: -1,
   });
 
@@ -32,28 +89,31 @@ export const tambahKamarBaru = async (dataKamar) => {
   if (kamarTerakhir) {
     idBaru = kamarTerakhir._id + 1;
   } else {
-    idBaru = lantai * 1000 + 1;
+    idBaru = lantaiAngka * 1000 + 1;
   }
 
-  if (
-    dataKamar["tipe-kamar"] &&
-    !["ekonomi", "eksekutif"].includes(dataKamar["tipe-kamar"])
-  ) {
-    throw new AppError(
-      "KAMAR_INVALID_TYPE",
-      "Tipe kamar harus 'ekonomi' atau 'eksekutif'",
-    );
-  }
+  let fotoFinal = Array.isArray(dataKamar.foto) ? dataKamar.foto : [];
+  if (fotoFinal.length === 0) {
+    const kamarContohTipeSama = await Kamar.findOne({
+      "tipe-kamar": tipeNormalized,
+      foto: { $exists: true, $not: { $size: 0 } },
+    }).lean();
 
-  if (dataKamar["harga"] && dataKamar["harga"] < 0) {
-    throw new AppError("KAMAR_INVALID_PRICE", "Harga kamar tidak boleh negatif");
+    if (kamarContohTipeSama) {
+      fotoFinal = kamarContohTipeSama.foto;
+    }
   }
 
   const payloadKamar = {
     ...dataKamar,
     _id: idBaru,
+    lantai: lantaiAngka,
+    "tipe-kamar": tipeNormalized,
     "nama-kamar": dataKamar["nama-kamar"] || idBaru.toString(),
+    foto: fotoFinal,
   };
+
+  delete payloadKamar.harga;
 
   const kamarBaru = new Kamar(payloadKamar);
   return await kamarBaru.save();
@@ -134,7 +194,6 @@ export const ambilDetailKamar = async (idKamar) => {
 
   return kamar;
 };
-
 export const ubahDataKamar = async (idKamar, dataUpdate) => {
   const kamarSaatIni = await Kamar.findById(idKamar);
   if (!kamarSaatIni) {
@@ -162,18 +221,17 @@ export const ubahDataKamar = async (idKamar, dataUpdate) => {
   delete dataUpdate.diarsipkan;
   delete dataUpdate["tipe-kamar"]; 
 
-  // if (dataUpdate['tipe-kamar']) {
-  //   const tipeBaru = dataUpdate['tipe-kamar'].toLowerCase();
-  //   if (tipeBaru === 'teratai') {
-  //     dataUpdate.harga = 300000;
-  //   } else if (tipeBaru === 'tulip') {
-  //     dataUpdate.harga = 500000;
-  //   }
-  // }
   const kamarDiperbarui = await Kamar.findByIdAndUpdate(idKamar, dataUpdate, {
     new: true,
     runValidators: true,
   });
+
+  if (Array.isArray(dataUpdate.foto)) {
+    await Kamar.updateMany(
+      { "tipe-kamar": kamarSaatIni["tipe-kamar"] },
+      { $set: { foto: dataUpdate.foto } }
+    );
+  }
 
   return kamarDiperbarui;
 };
@@ -200,7 +258,7 @@ export const hapusKamar = async (idKamar, isPermanent = false) => {
 
 export const resetKamar = async (
   idKamar,
-  catatanAdmin = "Selesai masa sewa",
+  catatanAdmin = "Selesai masa sewa (Reset Admin)",
 ) => {
   const kamar = await Kamar.findById(idKamar);
   if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
@@ -217,24 +275,114 @@ export const resetKamar = async (
     peran: "penyewa",
   });
 
-  if (penghuni) {
-    const riwayatBaru = new RiwayatSewa({
-      "id-kamar": idKamar,
-      "id-pengguna": penghuni._id,
-      "nama-penyewa": penghuni["nama-lengkap"],
-      "tanggal-masuk": penghuni["tanggal-mulai"] || penghuni["dibuat-pada"],
-      "tanggal-keluar": new Date(),
-      catatan: catatanAdmin,
-    });
-    await riwayatBaru.save();
+  let totalRefund = 0;
+  const tanggalEksekusi = new Date();
 
-    await Pengguna.findByIdAndUpdate(penghuni._id, {
-      $set: {
-        "id-kamar": null,
-        "tanggal-mulai": null,
-        "tanggal-berakhir": null,
-      },
+  if (penghuni) {
+    const tagihanLunas = await Tagihan.find({
+      "id-pengguna": penghuni._id,
+      "id-kamar": idKamar,
+      status: "lunas",
     });
+
+    const namaBulanIndo = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
+    const nilaiBulanIni =
+      tanggalEksekusi.getFullYear() * 12 + tanggalEksekusi.getMonth();
+    const idsMasaDepan = [];
+
+    for (const tag of tagihanLunas) {
+      const parts = tag["bulan-tagihan"].split(" ");
+      if (parts.length === 2) {
+        const idxBulan = namaBulanIndo.indexOf(parts[0]);
+        const tahunStr = parseInt(parts[1], 10);
+
+        if (idxBulan !== -1 && !isNaN(tahunStr)) {
+          const nilaiBulanTagihan = tahunStr * 12 + idxBulan;
+          if (nilaiBulanTagihan > nilaiBulanIni) {
+            idsMasaDepan.push(tag._id);
+            totalRefund += tag["jumlah-tagihan"];
+          }
+        }
+      }
+    }
+
+    if (idsMasaDepan.length > 0) {
+      const agregasiKas = await KasKost.aggregate([
+        { $group: { _id: "$tipe-transaksi", total: { $sum: "$nominal" } } }
+      ]);
+      let pemasukan = 0;
+      let pengeluaran = 0;
+      for (const item of agregasiKas) {
+        if (item._id === "pemasukan") pemasukan = item.total;
+        if (item._id === "pengeluaran") pengeluaran = item.total;
+      }
+      const saldoKasSaatIni = pemasukan - pengeluaran;
+
+      if (saldoKasSaatIni < totalRefund) {
+        throw new AppError(
+          "BAD_REQUEST",
+          `Reset kamar ditolak! Penghuni memiliki sisa saldo sewa sebesar Rp ${totalRefund.toLocaleString("id-ID")} yang harus di-refund, namun saldo Kas Kost saat ini hanya Rp ${saldoKasSaatIni.toLocaleString("id-ID")}.`
+        );
+      }
+
+      await Tagihan.updateMany(
+        { _id: { $in: idsMasaDepan } },
+        { status: "dibatalkan" },
+      );
+
+      await new KasKost({
+        "tipe-transaksi": "pengeluaran",
+        kategori: "pengembalian-sewa",
+        nominal: totalRefund,
+        keterangan: `Refund sisa sewa (Reset Kamar ${kamar["nama-kamar"] || idKamar}) untuk mantan penyewa ${penghuni["nama-lengkap"]}`,
+        "tanggal-transaksi": tanggalEksekusi,
+      }).save();
+    }
+
+    const riwayatUpdate = await RiwayatSewa.findOneAndUpdate(
+      {
+        "id-pengguna": penghuni._id,
+        "id-kamar": idKamar,
+        "tanggal-keluar": null,
+      },
+      {
+        $set: {
+          "tanggal-keluar": tanggalEksekusi,
+          catatan: catatanAdmin,
+        },
+      },
+      { new: true },
+    );
+
+    if (!riwayatUpdate) {
+      await new RiwayatSewa({
+        "id-kamar": idKamar,
+        "id-pengguna": penghuni._id,
+        "nama-penyewa": penghuni["nama-lengkap"],
+        "tanggal-masuk": penghuni["tanggal-mulai"] || penghuni["dibuat-pada"],
+        "tanggal-keluar": tanggalEksekusi,
+        catatan: catatanAdmin,
+      }).save();
+    }
+
+    await Tagihan.deleteMany({
+      "id-pengguna": penghuni._id,
+      status: { $in: ["belum-bayar", "terlambat"] },
+    });
+
     kirimEmail({
       to: penghuni.email,
       subject: "Terima Kasih! Masa Sewa Anda Telah Berakhir",
@@ -245,21 +393,18 @@ export const resetKamar = async (
     }).catch((err) => {
       console.error("[MAIL ALERT] Gagal mengirim email checkout:", err.message);
     });
+
+    await Pengguna.findByIdAndDelete(penghuni._id);
   }
 
   kamar.status = "kosong";
   kamar["penghuni-aktif"] = null;
   await kamar.save();
 
-  const penyewaLama = await Pengguna.findOne({ "id-kamar": idKamar });
-  if (penyewaLama) {
-    penyewaLama["id-kamar"] = null;
-    penyewaLama["tanggal-mulai"] = null;
-    penyewaLama["tanggal-berakhir"] = null;
-    await penyewaLama.save(); 
-  }
-
-  return kamar;
+  return {
+    kamar,
+    refund: totalRefund,
+  };
 };
 
 // ============ INPUT PENGHUNI ==========
@@ -268,6 +413,7 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
 
   const kamar = await Kamar.findById(idKamar);
   if (!kamar) throw new AppError("KAMAR_NOT_FOUND", "Kamar tidak ditemukan");
+  
   if (kamar.status !== 'kosong') {
     if (kamar.status === 'dipesan') {
       throw new AppError("KAMAR_STATUS_CONFLICT", "Gagal! Kamar saat ini sedang 'dipesan'. Harap ubah statusnya menjadi 'kosong' terlebih dahulu melalui menu Edit Kamar jika Anda benar-benar ingin memasukkan penghuni ini.");
@@ -294,123 +440,156 @@ export const inputPenghuniManual = async (idKamar, dataPayload) => {
         `Gagal! Akun dengan email ini masih aktif menyewa kamar ${penyewa["id-kamar"]}. Harap checkout terlebih dahulu.`,
       );
     }
-    
   }
-
 
   const cekTelepon = await Pengguna.findOne({
     "nomor-telepon": dataPengguna["nomor-telepon"],
   });
-  if (
-    cekTelepon &&
-    (!penyewa || cekTelepon._id.toString() !== penyewa._id.toString())
-  ) {
-    throw new Error("Nomor telepon penyewa sudah digunakan oleh akun lain!");
-  }
-  let isAkunBaru = false; 
-  const passwordDefault = crypto.randomBytes(4).toString("hex");
-
-if (!penyewa) {
-    isAkunBaru = true; 
-    const customId = await generateIdPengguna(tanggalMulai);
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(passwordDefault, salt);
-
-    penyewa = new Pengguna({
-      _id: customId,
-      "nama-lengkap": dataPengguna["nama-lengkap"],
-      email: dataPengguna.email,
-      "nomor-telepon": dataPengguna["nomor-telepon"],
-      "nama-kontak-darurat": dataPengguna["nama-kontak-darurat"],
-      "nomor-kontak-darurat": dataPengguna["nomor-kontak-darurat"],
-      "kata-sandi": hashedPassword,
-      peran: "penyewa",
-      "id-kamar": idKamar,
-      "tanggal-mulai": tanggalMulai,
-      "tanggal-berakhir": tanggalBerakhir,
-    });
-  } else {
-    penyewa.peran = "penyewa";
-    penyewa["id-kamar"] = idKamar;
-    penyewa["tanggal-mulai"] = tanggalMulai;
-    penyewa["tanggal-berakhir"] = tanggalBerakhir;
-    penyewa["nomor-telepon"] = dataPengguna["nomor-telepon"];
-    if (dataPengguna["nama-kontak-darurat"]) penyewa["nama-kontak-darurat"] = dataPengguna["nama-kontak-darurat"];
-    if (dataPengguna["nomor-kontak-darurat"]) penyewa["nomor-kontak-darurat"] = dataPengguna["nomor-kontak-darurat"];
-  }
-  await penyewa.save();
-
-  const pemesananBaru = new Pemesanan({
-    "id-pengguna": penyewa._id,
-    "id-kamar": idKamar,
-    "durasi-bulan": durasiBulan,
-    status: "disetujui",
-    "tanggal-mulai": tanggalMulai,
-    "batas-waktu-bayar": new Date(),
-  });
-  await pemesananBaru.save();
-
-  const totalHarga = hargaBulanan * durasiBulan;
-  const nomorInvoice = `INV-${Date.now()}`;
-  const namaBulan = tanggalMulai.toLocaleString("id-ID", {
-    month: "long",
-    year: "numeric",
-  });
-  const tagihanBaru = new Tagihan({
-    "id-pengguna": penyewa._id,
-    "id-kamar": idKamar,
-    "nomor-tagihan": nomorInvoice,
-    "bulan-tagihan": namaBulan,
-    "jumlah-tagihan": totalHarga,
-    "tanggal-jatuh-tempo": new Date(),
-    status: "lunas",
-  });
-  await tagihanBaru.save();
-
-  const pembayaranBaru = new Pembayaran({
-    "id-tagihan": tagihanBaru._id,
-    "jumlah-bayar": totalHarga,
-    "metode-pembayaran": dataSewa["metode-pembayaran"] || "tunai",
-    status: "terverifikasi",
-    "tanggal-bayar": new Date(),
-  });
-  await pembayaranBaru.save();
-
-  kamar.status = "terisi";
-  await kamar.save();
-  if (isAkunBaru) {
-    kirimEmail({
-      to: penyewa.email,
-      subject: "Selamat Datang! Informasi Akun KostRumahKu",
-      html: templateAkunBaru(
-        penyewa['nama-lengkap'],
-        penyewa.email,
-        passwordDefault,
-        kamar['nama-kamar'] 
-      )
-    }).catch(err => {
-      console.error("[MAIL ALERT] Gagal mengirim email welcome:", err.message);
-    });
-  }
-
-  const penyewaResponse = penyewa.toObject();
-  delete penyewaResponse["kata-sandi"];
   
-  const kamarResponse = {
-    "_id": kamar._id,
-    "nama-tampilan": `Kamar ${penyewa['nama-lengkap']}`, 
-    "nama-asli": `kamar ${kamar['nama-kamar']}`,
-    "tipe-kamar": kamar['tipe-kamar'],
-    "lantai": kamar.lantai,
-    "harga": kamar.harga
-  };
+  if (cekTelepon && (!penyewa || cekTelepon._id.toString() !== penyewa._id.toString())) {
+    throw new AppError("CONFLICT", "Nomor telepon sudah digunakan oleh penyewa lain!");
+  }
+  const metodeBayar = dataSewa["metode-pembayaran"].toLowerCase().trim();
+  let rekeningValid = null;
 
-  return {
-    penyewa: penyewaResponse,
-    kamar: kamarResponse,
-    nomorInvoice,
-    totalHarga,
-  };
+  if (metodeBayar === "transfer") {
+    rekeningValid = await RekeningKost.findById(dataSewa["id-rekening"]);
+    if (!rekeningValid) {
+      throw new AppError("NOT_FOUND", "Rekening tujuan yang dipilih tidak ditemukan di sistem.");
+    }
+    if (rekeningValid.status !== "aktif") {
+      throw new AppError("CONFLICT", "Rekening tujuan tersebut sedang tidak aktif.");
+    }
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    let isAkunBaru = false; 
+    const passwordDefault = crypto.randomBytes(4).toString("hex");
+
+    if (!penyewa) {
+      isAkunBaru = true; 
+      const customId = await generateIdPengguna(tanggalMulai);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(passwordDefault, salt);
+
+      penyewa = new Pengguna({
+        _id: customId,
+        "nama-lengkap": dataPengguna["nama-lengkap"],
+        email: dataPengguna.email,
+        "nomor-telepon": dataPengguna["nomor-telepon"],
+        "nama-kontak-darurat": dataPengguna["nama-kontak-darurat"],
+        "nomor-kontak-darurat": dataPengguna["nomor-kontak-darurat"],
+        "kata-sandi": hashedPassword,
+        peran: "penyewa",
+        "id-kamar": idKamar,
+        "tanggal-mulai": tanggalMulai,
+        "tanggal-berakhir": tanggalBerakhir,
+      });
+    } else {
+      penyewa.peran = "penyewa";
+      penyewa["id-kamar"] = idKamar;
+      penyewa["tanggal-mulai"] = tanggalMulai;
+      penyewa["tanggal-berakhir"] = tanggalBerakhir;
+      penyewa["nomor-telepon"] = dataPengguna["nomor-telepon"];
+      if (dataPengguna["nama-kontak-darurat"]) penyewa["nama-kontak-darurat"] = dataPengguna["nama-kontak-darurat"];
+      if (dataPengguna["nomor-kontak-darurat"]) penyewa["nomor-kontak-darurat"] = dataPengguna["nomor-kontak-darurat"];
+    }
+    await penyewa.save({ session });
+
+    const pemesananBaru = new Pemesanan({
+      "id-pengguna": penyewa._id,
+      "id-kamar": idKamar,
+      "durasi-bulan": durasiBulan,
+      status: "berhasil", 
+      "tanggal-mulai": tanggalMulai,
+      "batas-waktu-bayar": new Date(),
+    });
+    await pemesananBaru.save({ session });
+
+    const totalHarga = hargaBulanan * durasiBulan;
+    
+    const nomorInvoice = `INV-MNL-${Date.now()}`;
+
+    const kasBaru = new KasKost({
+      "tipe-transaksi": "pemasukan",
+      kategori: "pembayaran-sewa",
+      nominal: totalHarga,
+      keterangan: `Input penghuni manual (Kamar ${kamar["nama-kamar"]} - ${durasiBulan} bulan) untuk penyewa ${dataPengguna["nama-lengkap"]}`,
+      "tanggal-transaksi": new Date(),
+    });
+    await kasBaru.save({ session });
+    
+    for (let i = 0; i < durasiBulan; i++) {
+      const bulanTagihanIni = new Date(tanggalMulai);
+      bulanTagihanIni.setMonth(bulanTagihanIni.getMonth() + i);
+
+      const namaBulanString = bulanTagihanIni.toLocaleString("id-ID", { month: "long", year: "numeric" });
+      const invoiceBulanan = `${nomorInvoice}-${i + 1}`;
+
+      const tagihanBaru = new Tagihan({
+        "id-pengguna": penyewa._id,
+        "nama-penyewa": penyewa["nama-lengkap"],
+        "id-kamar": idKamar,
+        "nomor-tagihan": invoiceBulanan,
+        "bulan-tagihan": namaBulanString,
+        "jumlah-tagihan": hargaBulanan,
+        "tanggal-jatuh-tempo": tanggalMulai,
+        status: "lunas",
+        "bukti-pembayaran": rekeningValid
+          ? `Transfer ke ${rekeningValid["nama-bank"]} (Input Admin)`
+          : "Pembayaran Tunai ke Admin",
+        "rekening-tujuan": rekeningValid ? rekeningValid._id : null,
+        "metode-pembayaran": rekeningValid ? rekeningValid["nama-bank"] : "Tunai",
+      });
+      await tagihanBaru.save({ session });
+    }
+
+    kamar.status = "terisi";
+    await kamar.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    if (isAkunBaru) {
+      kirimEmail({
+        to: penyewa.email,
+        subject: `Selamat Datang! Informasi Akun ${APP_NAME}`,
+        html: templateAkunBaru(
+          penyewa['nama-lengkap'],
+          penyewa.email,
+          passwordDefault,
+          kamar['nama-kamar'] 
+        )
+      }).catch(err => console.error("[MAIL ALERT] Gagal mengirim email welcome:", err.message));
+    }
+
+    const penyewaResponse = penyewa.toObject();
+    delete penyewaResponse["kata-sandi"];
+    
+    const kamarResponse = {
+      "_id": kamar._id,
+      "nama-tampilan": `Kamar ${penyewa['nama-lengkap']}`, 
+      "nama-asli": `kamar ${kamar['nama-kamar']}`,
+      "tipe-kamar": kamar['tipe-kamar'],
+      "lantai": kamar.lantai,
+      "harga": kamar.harga
+    };
+
+    return {
+      penyewa: penyewaResponse,
+      kamar: kamarResponse,
+      nomorInvoice,
+      totalHarga,
+    };
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new AppError("INTERNAL_SERVER_ERROR", "Gagal menginput penghuni manual: " + error.message);
+  }
 };
 
 export const entryDataLama = async (idKamar, dataPayload) => {
@@ -500,23 +679,27 @@ if (!penyewa) {
 
   const tagihanBaru = new Tagihan({
     "id-pengguna": penyewa._id,
+    "nama-penyewa": penyewa["nama-lengkap"],
     "id-kamar": idKamar,
     "nomor-tagihan": nomorInvoice,
     "bulan-tagihan": namaBulan,
     "jumlah-tagihan": totalHarga,
     "tanggal-jatuh-tempo": tanggalSiklusSekarang,
     status: "lunas",
+    "bukti-pembayaran": dataSewa["metode-pembayaran"] || "Pembayaran Tunai ke Admin",
+    "rekening-tujuan": dataSewa["id-rekening"] || null,
+    "metode-pembayaran": dataSewa["id-rekening"] ? "Transfer" : (dataSewa["metode-pembayaran"] || "Tunai")
   });
   await tagihanBaru.save();
 
-  const pembayaranBaru = new Pembayaran({
-    "id-tagihan": tagihanBaru._id,
-    "jumlah-bayar": totalHarga,
-    "metode-pembayaran": dataSewa["metode-pembayaran"] || "tunai",
-    status: "terverifikasi",
-    "tanggal-bayar": tanggalSiklusSekarang,
+  const kasMigrasi = new KasKost({
+    "tipe-transaksi": "pemasukan",
+    kategori: "pembayaran-sewa",
+    nominal: totalHarga,
+    keterangan: `Entry data lama / migrasi (Kamar ${kamar["nama-kamar"]} - ${durasiBulan} bulan) untuk penyewa ${dataPengguna["nama-lengkap"]}`,
+    "tanggal-transaksi": tanggalSiklusSekarang,
   });
-  await pembayaranBaru.save();
+  await kasMigrasi.save();  
 
   kamar.status = "terisi";
   await kamar.save();
@@ -524,7 +707,7 @@ if (!penyewa) {
   if (isAkunBaru) {
     kirimEmail({
       to: penyewa.email,
-      subject: "Selamat Datang! Akses Akun KostRumahKu Anda",
+      subject: `Selamat Datang! Akses Akun ${APP_NAME} Anda`,
       html: templateAkunBaru(
         penyewa["nama-lengkap"],
         penyewa.email,
@@ -561,12 +744,6 @@ if (!penyewa) {
       'jumlah-tagihan': hargaBulanan, 'tanggal-jatuh-tempo': tglLoop, 'status': 'lunas'
     });
     await tagihanHist.save();
-
-    const bayarHist = new Pembayaran({
-      'id-tagihan': tagihanHist._id, 'jumlah-bayar': hargaBulanan,
-      'metode-pembayaran': 'tunai', 'status': 'terverifikasi', 'tanggal-bayar': tglLoop
-    });
-    await bayarHist.save();
   }
   */
 
@@ -631,7 +808,7 @@ export const pindahKamar = async (dataPayload) => {
     "id-kamar": kamarLama._id,
     "tanggal-masuk": penyewa["tanggal-mulai"],
     "tanggal-keluar": new Date(),
-    keterangan: `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`,
+    catatan: `Pindah dari kamar ${kamarLama._id} ke kamar ${kamarBaru._id}`,
   });
 
   const errorValidasi = riwayatBaru.validateSync();
