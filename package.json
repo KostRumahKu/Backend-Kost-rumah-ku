@@ -1,7 +1,7 @@
 {
   "name": "backend-kost-rumah-ku",
   "module": "index.ts",
-  "version": "0.3.1",
+  "version": "0.4.2-RC",
   "type": "module",
   "main": "src/app.js",
   "engines": {
