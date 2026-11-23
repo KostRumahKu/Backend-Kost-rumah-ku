@@ -7,6 +7,7 @@ import { verifyInternalKey } from "./middlewares/apikey-middleware.js";
 import { errorHandler } from "./middlewares/error-middleware.js";
 import { loggerSetup } from "./logger-setup.js";
 import { AppError } from "./errors.js";
+import { BACKEND_VERSION } from "./config/app-config.js";
 
 import "./utils/version-check.js";
 
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
   res.status(200).json({
     status: "sukses",
     message: "backend sudah berhasil berjalan dengan mode " + process.env.NODE_ENV,
+    version: `${BACKEND_VERSION}`
   });
 });
 
