@@ -7,7 +7,7 @@ export const kontrakPublicBooking = {
   "tipe-kamar": "String (Wajib: 'standart' [lantai 1-3], 'tulip' [khusus lantai 2], atau 'amarilis' [khusus lantai 3])",
   "lantai": "Number (Wajib: 1, 2, atau 3)",
   "durasi-bulan": "Number (Wajib, minimal 1)",
-  "tanggal-mulai": "Date (Wajib, format ISO 8601)"
+  "tanggal-mulai": "Date (Wajib, format YYYY-MM-DD)"
 };
 
 export const kontrakPublicUploadBukti = {
