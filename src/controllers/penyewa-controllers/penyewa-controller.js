@@ -59,7 +59,9 @@ export const updateProfilPenyewa = async (req, res) => {
         throw new AppError(
           "VALIDATION_ERROR",
           "Tidak ada data yang dikirim untuk diperbarui.",
-          { kebutuhan_payload: kontrakPenyewaUpdateProfil, },
+          { kebutuhan_payload: kontrakPenyewaUpdateProfil,
+            API_note: "Karena ini Update data jadi cukup kirimkan salah satu field yang mau diganti saja",
+          },
         );
       }
     }
