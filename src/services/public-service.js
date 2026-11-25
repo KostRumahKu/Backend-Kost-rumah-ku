@@ -10,6 +10,11 @@ import {
 import { ambilDaftarRekening } from "./admin-services/admin-rekening-service.js";
 import RekeningKost from "../models/rekening-model.js";
 import { APP_NAME } from "../config/app-config.js";
+import fasilitas from "../models/fasilitas.model.js"
+
+export const ambilFasilitasKost = async (id) => {
+  return await fasilitas.find().sort({"dibuat-pada": -1});
+}
 
 export const ambilDetailPemesananPublik = async (idPemesanan) => {
   const pesanan = await Pemesanan.findById(idPemesanan)

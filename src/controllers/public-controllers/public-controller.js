@@ -3,6 +3,7 @@ import {
   prosesBookingKamar,
   uploadBuktiPembayaranBooking,
   ambilDetailPemesananPublik,
+  ambilFasilitasKost,
 } from "../../services/public-service.js";
 import { ambilDaftarRekening } from "../../services/admin-services/admin-rekening-service.js"; 
 import { AppError } from "../../errors.js";
@@ -11,6 +12,15 @@ import {
   kontrakPublicUploadBukti,
 } from "../../contracts/public-booking-contract.js";
 import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
+
+export const getFasilitasKost = async (req, res) => {
+  try {
+    const data = await ambilFasilitasKost();
+    res.status(200).json({ status: "sukses", data });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 export const getKamarPublikData = async (req, res) => {
