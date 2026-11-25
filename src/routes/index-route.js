@@ -7,6 +7,7 @@ import {
   postUploadBuktiBooking,
   getDetailPemesananPublik,
   getFasilitasKost,
+  getSemuaPeraturan,
 } from "../controllers/public-controllers/public-controller.js";
 import penyewaRoute from "./penyewa-routes/penyewa-route.js";
 import adminDashboardRoute from "./admin-routes/admin-dashboard-route.js";
@@ -16,7 +17,6 @@ import { getDaftarRekeningPublik } from "../controllers/public-controllers/publi
 import rekeningRoutes from "./admin-routes/admin-rekening-route.js";
 import adminBookingRoutes from "./admin-routes/admin-booking-route.js";
 import adminPeraturanRoutes from "./admin-routes/admin-peraturan-route.js";
-import { ambilSemuaPeraturan } from "../controllers/admin-controllers/admin-peraturan-controller.js";
 import pdfPeneywaGenerate from "./penyewa-routes/penyewa-tagihan-route.js";
 import pdfAdminGenerate from "./admin-routes/admin-generate.js";
 import adminTagihanRoutes from "./admin-routes/admin-tagihan-route.js"
@@ -39,7 +39,7 @@ router.get("/public/rekening", getDaftarRekeningPublik);
 router.use("/admin/rekening", rekeningRoutes);
 router.use("/admin/booking", adminBookingRoutes);
 router.use("/admin/peraturan", adminPeraturanRoutes);
-router.get("/public/semua-peraturan", ambilSemuaPeraturan);
+router.get("/public/semua-peraturan", getSemuaPeraturan);
 router.get("/public/fasilitas-kost", getFasilitasKost); 
 router.use("/penyewa", pdfPeneywaGenerate); //ini khusus tagihan
 router.use("/admin/generate", pdfAdminGenerate);

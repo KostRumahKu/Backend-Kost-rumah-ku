@@ -11,6 +11,11 @@ import { ambilDaftarRekening } from "./admin-services/admin-rekening-service.js"
 import RekeningKost from "../models/rekening-model.js";
 import { APP_NAME } from "../config/app-config.js";
 import fasilitas from "../models/fasilitas.model.js"
+import Peraturan from "../models/peraturan-model.js";
+
+export const ambilSemuaPeraturan = async () => {
+  return await Peraturan.find().sort({ "dibuat-pada": -1 }); 
+};
 
 export const ambilFasilitasKost = async (id) => {
   return await fasilitas.find().sort({"dibuat-pada": -1});

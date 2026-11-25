@@ -4,6 +4,7 @@ import {
   uploadBuktiPembayaranBooking,
   ambilDetailPemesananPublik,
   ambilFasilitasKost,
+  ambilSemuaPeraturan,
 } from "../../services/public-service.js";
 import { ambilDaftarRekening } from "../../services/admin-services/admin-rekening-service.js"; 
 import { AppError } from "../../errors.js";
@@ -12,6 +13,15 @@ import {
   kontrakPublicUploadBukti,
 } from "../../contracts/public-booking-contract.js";
 import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
+
+export const getSemuaPeraturan = async (req, res, next) => {
+  try {
+    const data = await ambilSemuaPeraturan();
+    res.status(200).json({ status: "sukses", data });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getFasilitasKost = async (req, res) => {
   try {
