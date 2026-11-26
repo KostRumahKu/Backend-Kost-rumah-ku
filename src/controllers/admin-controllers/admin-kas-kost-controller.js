@@ -4,12 +4,12 @@ import { kontrakAdminKasKost } from "../../contracts/admin-kas-kost-contract.js"
 
 export const getRingkasanKas = async (req, res, next) => {
   try {
-    const ringkasan = await adminKasKostService.ambilRingkasanKas();
-    
+    const ringkasan = await adminKasKostService.ambilRingkasanKas(req.query);
+
     res.status(200).json({
       status: "sukses",
       pesan: "Berhasil memuat ringkasan keuangan dan saldo kost.",
-      data: ringkasan
+      data: ringkasan,
     });
   } catch (error) {
     next(error);
@@ -18,13 +18,22 @@ export const getRingkasanKas = async (req, res, next) => {
 
 export const getRiwayatKas = async (req, res, next) => {
   try {
-    const riwayat = await adminKasKostService.ambilRiwayatKas(req.query);
-    
-    res.status(200).json({
+    const hasil = await adminKasKostService.ambilRiwayatKas(req.query);
+
+    const responsJson = {
       status: "sukses",
       pesan: "Berhasil memuat riwayat transaksi kas.",
-      data: riwayat
-    });
+      "filter-aktif": hasil["filter-aktif"],
+      ringkasan: hasil.ringkasan,
+    };
+
+    if (hasil["rekap-bulanan"]) {
+      responsJson["rekap-bulanan"] = hasil["rekap-bulanan"];
+    }
+
+    responsJson.data = hasil.transaksi;
+
+    res.status(200).json(responsJson);
   } catch (error) {
     next(error);
   }
@@ -51,7 +60,6 @@ export const postKasManual = async (req, res, next) => {
     }
 
     const hasil = await adminKasKostService.catatKasManual(dataPayload);
-    
     res.status(201).json({
       status: "sukses",
       pesan: "Berhasil mencatat transaksi manual ke buku kas.",
