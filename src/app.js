@@ -7,7 +7,9 @@ import { verifyInternalKey } from "./middlewares/apikey-middleware.js";
 import { errorHandler } from "./middlewares/error-middleware.js";
 import { loggerSetup } from "./logger-setup.js";
 import { AppError } from "./errors.js";
-import { BACKEND_VERSION } from "./config/app-config.js";
+import packageJson from "../package.json";
+
+export const BACKEND_VERSION = packageJson.version;
 
 import "./utils/version-check.js";
 

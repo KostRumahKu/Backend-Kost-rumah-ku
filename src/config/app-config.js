@@ -33,4 +33,3 @@ export const BUSINESS_OPERATING_HOURS =
 export const DEFAULT_PROFILE_IMAGE_URL =
   process.env.DEFAULT_PROFILE_IMAGE_URL ||
   "https://uploader.danafxc.my.id/images/8c67c844-421b-470a-aa42-476429f8cce2.png";
-export const BACKEND_VERSION = process.env.BACKEND_VERSION || "VERSI BE BELUM DI ATUR";

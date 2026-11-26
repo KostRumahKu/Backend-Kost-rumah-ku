@@ -2,8 +2,9 @@ import "dotenv/config";
 import app from "./app.js";
 import { connectDatabase } from "./config/database.js";
 import { inisialisasiCronJob } from "./services/cron-service.js";
-import { BACKEND_VERSION } from "./config/app-config.js"
+import packageJson from "../package.json";
 
+export const BACKEND_VERSION = packageJson.version;
 const PORT = process.env.PORT || 3000;
 
 await connectDatabase();
