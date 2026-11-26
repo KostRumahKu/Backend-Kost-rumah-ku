@@ -58,7 +58,7 @@ export const prosesValidasiBooking = async (idPemesanan, payload) => {
   }
 
   // SKENARIO PERTAMA ADMIN MENOLAK KARENA BUKTI PEMBAYARAN SALAH
-  if (statusValidasi === "tolak") {
+  if (statusValidasi === "ditolak") {
     pesanan.status = "menunggu-pembayaran";
     pesanan["bukti-pembayaran"] = null; 
     
