@@ -8,6 +8,7 @@ import {
   getDetailPemesananPublik,
   getFasilitasKost,
   getSemuaPeraturan,
+  getReviewPublik,
 } from "../controllers/public-controllers/public-controller.js";
 import penyewaRoute from "./penyewa-routes/penyewa-route.js";
 import adminDashboardRoute from "./admin-routes/admin-dashboard-route.js";
@@ -24,6 +25,8 @@ import rutePembayaranPenyewa from "./penyewa-routes/penyewa-pembayaran-tagihan-r
 import adminKasKostRoute from "./admin-routes/admin-kas-kost-route.js";
 import adminPenggunaRoute from "./admin-routes/admin-edit-pengguna-route.js";
 import adminFasilitasRoute from "./admin-routes/admin-fasilitas-route.js";
+import penyewaReviewRoute from "./penyewa-routes/penyewa-review-route.js";
+import adminReviewRoute from "./admin-routes/admin-review-route.js";
 const router = express.Router();
 
 router.use("/auth", authRoutes);
@@ -49,4 +52,7 @@ router.use("/admin/keuangan", adminKasKostRoute);
 router.get("/public/booking/:id", getDetailPemesananPublik);
 router.use("/admin/pengguna", adminPenggunaRoute);
 router.use("/admin/fasilitas", adminFasilitasRoute);
+router.get("/public/review", getReviewPublik);
+router.use("/penyewa/review", penyewaReviewRoute);
+router.use("/admin/review", adminReviewRoute);
 export default router;

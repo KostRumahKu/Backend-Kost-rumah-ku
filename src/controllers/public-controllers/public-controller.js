@@ -5,6 +5,7 @@ import {
   ambilDetailPemesananPublik,
   ambilFasilitasKost,
   ambilSemuaPeraturan,
+  ambilReviewPublik,
 } from "../../services/public-service.js";
 import { ambilDaftarRekening } from "../../services/admin-services/admin-rekening-service.js"; 
 import { AppError } from "../../errors.js";
@@ -13,6 +14,22 @@ import {
   kontrakPublicUploadBukti,
 } from "../../contracts/public-booking-contract.js";
 import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
+
+export const getReviewPublik = async (req, res, next) => {
+  try {
+    const data = await ambilReviewPublik(req.query);
+
+    res.setHeader("Cache-Control", "public, max-age=60");
+
+    res.status(200).json({
+      status: "sukses",
+      pesan: "Berhasil memuat ulasan penyewa kost.",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getSemuaPeraturan = async (req, res, next) => {
   try {

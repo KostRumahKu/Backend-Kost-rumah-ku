@@ -12,6 +12,58 @@ import RekeningKost from "../models/rekening-model.js";
 import { APP_NAME } from "../config/app-config.js";
 import fasilitas from "../models/fasilitas.model.js"
 import Peraturan from "../models/peraturan-model.js";
+import Review from "../models/review-model.js";
+import {
+  formatReviewHybrid,
+  hitungRingkasanRating,
+} from "../utils/review-helper.js";
+
+export const ambilReviewPublik = async (query = {}) => {
+  const filter = { terisi: true };
+
+  if (query.bintang !== undefined) {
+    const bintangAngka = Number(query.bintang);
+    if (Number.isInteger(bintangAngka) && bintangAngka >= 1 && bintangAngka <= 5) {
+      filter.bintang = bintangAngka;
+    }
+  }
+
+  let kueriReview = Review.find(filter)
+    .populate({
+      path: "id-penyewa",
+      select: "nama-lengkap foto-profil id-kamar",
+      populate: {
+        path: "id-kamar",
+        select: "nama-kamar tipe-kamar lantai",
+      },
+    })
+    .sort({ "dibuat-pada": -1 });
+
+  if (query.limit !== undefined) {
+    const batas = Number(query.limit);
+    if (Number.isInteger(batas) && batas > 0) {
+      kueriReview = kueriReview.limit(batas);
+    }
+  }
+
+  const [daftarReviewMentah, ringkasanRating] = await Promise.all([
+    kueriReview,
+    hitungRingkasanRating({ terisi: true }),
+  ]);
+
+  const daftarUlasan = daftarReviewMentah.map((item) => {
+    const bersih = formatReviewHybrid(item);
+    // Hilangkan id-penyewa & field internal terisi untuk konsumsi publik
+    delete bersih["id-penyewa"];
+    delete bersih.terisi;
+    return bersih;
+  });
+
+  return {
+    ringkasan: ringkasanRating,
+    ulasan: daftarUlasan,
+  };
+};
 
 export const ambilSemuaPeraturan = async () => {
   return await Peraturan.find().sort({ "dibuat-pada": -1 }); 
