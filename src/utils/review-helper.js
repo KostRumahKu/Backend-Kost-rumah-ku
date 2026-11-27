@@ -35,6 +35,7 @@ export const formatReviewHybrid = (dokumenReview) => {
     bintang: obj.bintang,
     deskripsi: obj.deskripsi,
     terisi: obj.terisi,
+    "simpan-pengaturan-review": Boolean(obj["simpan-pengaturan-review"]),
     "dibuat-pada": obj["dibuat-pada"],
     "diperbarui-pada": obj["diperbarui-pada"],
   };

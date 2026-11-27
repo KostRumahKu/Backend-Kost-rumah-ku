@@ -23,20 +23,44 @@ const reviewSchema = new mongoose.Schema(
     },
     bintang: {
       type: Number,
-      required: [true, "Rating bintang wajib diisi"],
+      required: [
+        function () {
+          return this.terisi === true;
+        },
+        "Rating bintang wajib diisi",
+      ],
+      default: null,
       validate: {
         validator: function (nilai) {
-          return Number.isInteger(nilai) && String(nilai).length === 1;
+          if (nilai === null || nilai === undefined) {
+            return this.terisi !== true;
+          }
+          return (
+            Number.isInteger(nilai) &&
+            nilai >= 1 &&
+            nilai <= 5 &&
+            String(nilai).length === 1
+          );
         },
         message: "Rating bintang harus berupa 1 digit bilangan bulat (1 sampai 5)",
       },
     },
+    "simpan-pengaturan-review": { // untuk pop up review di website , true jika tidka ingin membuat ulasan selama nya
+      type: Boolean,
+      default: false,
+    },
     deskripsi: {
       type: String,
-      required: [true, "Deskripsi ulasan wajib diisi"],
+      required: [
+        function () {
+          return this.terisi === true;
+        },
+        "Deskripsi ulasan wajib diisi",
+      ],
+      default: null,
       trim: true,
     },
-    terisi: { // Untuk cek apakah sudah review atau belum (untuk pop up di awal dashboard seperti play store)
+    terisi: {
       type: Boolean,
       default: true,
     },

@@ -1,11 +1,17 @@
 export const kontrakPenyewaBuatReview = {
   "bintang": "Number (Wajib, 1 digit bilangan bulat dari 1 sampai 5)",
   "deskripsi": "String (Wajib, ulasan atau pengalaman tinggal di kost)",
+  "simpan-pengaturan-review": "Boolean (Opsional, true untuk 'Jangan ingatkan saya lagi', false untuk mengaktifkan kembali) default false",
 };
 
 export const kontrakPenyewaUbahReview = {
   "bintang": "Number (Opsional, 1 digit bilangan bulat dari 1 sampai 5)",
   "deskripsi": "String (Opsional, ulasan atau pengalaman tinggal di kost)",
+  "simpan-pengaturan-review": "Boolean (Opsional, true untuk 'Jangan ingatkan saya lagi', false untuk mengaktifkan kembali)",
+};
+
+export const kontrakPenyewaPengaturanReview = {
+  "simpan-pengaturan-review": "Boolean (Wajib, true untuk 'Jangan ingatkan saya lagi', false untuk mengaktifkan kembali)",
 };
 
 export const kontrakAdminBuatReview = {
@@ -18,4 +24,5 @@ export const kontrakAdminUbahReview = {
   "bintang": "Number (Opsional, 1 digit bilangan bulat dari 1 sampai 5)",
   "deskripsi": "String (Opsional)",
   "terisi": "Boolean (Opsional, true untuk tampil di pop up landing page, false untuk sembunyikan)",
+  "simpan-pengaturan-review": "Boolean (Opsional, pengaturan pop-up pengingat di sisi penyewa)",
 };

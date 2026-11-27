@@ -106,27 +106,38 @@ export const buatReviewOlehAdmin = async (payload) => {
     );
   }
 
-  const sudahAda = await Review.findOne({ "id-penyewa": penyewa._id });
-  if (sudahAda) {
+  const dokumenSaatIni = await Review.findOne({ "id-penyewa": penyewa._id });
+  if (dokumenSaatIni && dokumenSaatIni.terisi === true) {
     throw new AppError(
       "CONFLICT",
-      `Penyewa '${penyewa["nama-lengkap"]}' sudah memiliki ulasan. Gunakan metode PUT untuk mengedit ulasan tersebut.`,
+      `Penyewa '${penyewa["nama-lengkap"]}' sudah memiliki ulasan.`,
+      { API_NOTES : "untuk bagian ini bisa pakai PATCH ke admin kalau ulasan nya sudah ada"}
     );
   }
 
-  const reviewBaru = new Review({
-    "id-penyewa": penyewa._id,
-    "nama-penyewa": penyewa["nama-lengkap"],
-    "foto-profil": penyewa["foto-profil"] || null,
-    "info-kamar": snapshotKamar(penyewa),
-    bintang,
-    deskripsi: deskripsi.trim(),
-    terisi: true,
-  });
+  let reviewTersimpan;
+  if (dokumenSaatIni && dokumenSaatIni.terisi === false) {
+    dokumenSaatIni["nama-penyewa"] = penyewa["nama-lengkap"];
+    dokumenSaatIni["foto-profil"] = penyewa["foto-profil"] || null;
+    dokumenSaatIni["info-kamar"] = snapshotKamar(penyewa);
+    dokumenSaatIni.bintang = bintang;
+    dokumenSaatIni.deskripsi = deskripsi.trim();
+    dokumenSaatIni.terisi = true;
+    reviewTersimpan = await dokumenSaatIni.save();
+  } else {
+    const reviewBaru = new Review({
+      "id-penyewa": penyewa._id,
+      "nama-penyewa": penyewa["nama-lengkap"],
+      "foto-profil": penyewa["foto-profil"] || null,
+      "info-kamar": snapshotKamar(penyewa),
+      bintang,
+      deskripsi: deskripsi.trim(),
+      terisi: true,
+    });
+    reviewTersimpan = await reviewBaru.save();
+  }
 
-  await reviewBaru.save();
-
-  await reviewBaru.populate({
+  await reviewTersimpan.populate({
     path: "id-penyewa",
     select: "nama-lengkap foto-profil id-kamar",
     populate: {
@@ -135,7 +146,7 @@ export const buatReviewOlehAdmin = async (payload) => {
     },
   });
 
-  return formatReviewHybrid(reviewBaru);
+  return formatReviewHybrid(reviewTersimpan);
 };
 
 export const ubahReviewOlehAdmin = async (idReview, payload) => {
@@ -156,6 +167,11 @@ export const ubahReviewOlehAdmin = async (idReview, payload) => {
 
   if (payload.terisi !== undefined) {
     reviewSaatIni.terisi = payload.terisi;
+  }
+
+  if (payload["simpan-pengaturan-review"] !== undefined) {
+    reviewSaatIni["simpan-pengaturan-review"] =
+      payload["simpan-pengaturan-review"];
   }
 
   await reviewSaatIni.save();

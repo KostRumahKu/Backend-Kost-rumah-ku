@@ -3,6 +3,7 @@ import { AppError } from "../../errors.js";
 import {
   kontrakPenyewaBuatReview,
   kontrakPenyewaUbahReview,
+  kontrakPenyewaPengaturanReview,
 } from "../../contracts/review-contract.js";
 
 export const getReviewPenyewa = async (req, res, next) => {
@@ -26,9 +27,13 @@ export const getReviewPenyewa = async (req, res, next) => {
 export const postReviewPenyewa = async (req, res, next) => {
   try {
     const dataPayload = req.body ?? {};
-    const { bintang, deskripsi } = dataPayload;
+    const {
+      bintang,
+      deskripsi,
+      "simpan-pengaturan-review": simpanPengaturan,
+    } = dataPayload;
 
-    if (bintang === undefined || !deskripsi) {
+    if (bintang === undefined || deskripsi === undefined) {
       throw new AppError(
         "VALIDATION_ERROR",
         "Field 'bintang' dan 'deskripsi' wajib diisi!",
@@ -48,7 +53,7 @@ export const postReviewPenyewa = async (req, res, next) => {
       throw new AppError("VALIDATION_ERROR", "Rating bintang minimal 1");
     }
 
-    const fieldDiizinkan = ["bintang", "deskripsi"];
+    const fieldDiizinkan = ["bintang", "deskripsi", "simpan-pengaturan-review"];
     const fieldAsing = Object.keys(dataPayload).filter(
       (key) => !fieldDiizinkan.includes(key),
     );
@@ -68,10 +73,22 @@ export const postReviewPenyewa = async (req, res, next) => {
       );
     }
 
+    if (
+      simpanPengaturan !== undefined &&
+      typeof simpanPengaturan !== "boolean"
+    ) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Field 'simpan-pengaturan-review' wajib berupa boolean (true atau false).",
+        { kebutuhan_payload: kontrakPenyewaBuatReview },
+      );
+    }
+
     const idPenyewa = req.pengguna._id || req.pengguna.id;
     const hasil = await penyewaReviewService.buatReviewPenyewa(idPenyewa, {
       bintang,
       deskripsi,
+      "simpan-pengaturan-review": simpanPengaturan,
     });
 
     res.status(201).json({
@@ -104,7 +121,7 @@ export const patchReviewPenyewa = async (req, res, next) => {
         },
     );
     }
-
+  if (bintang !== undefined) {
     if ( typeof bintang !== "number" ) {
         throw new AppError(
             "VALIDATION_ERROR",
@@ -125,9 +142,9 @@ export const patchReviewPenyewa = async (req, res, next) => {
             "Rating bintang minimal 1",
         );
     }
+  }
 
-
-    const fieldDiizinkan = ["bintang", "deskripsi"];
+    const fieldDiizinkan = ["bintang", "deskripsi", "simpan-pengaturan-review"];
     const fieldAsing = Object.keys(dataPayload).filter(
       (key) => !fieldDiizinkan.includes(key),
     );
@@ -155,6 +172,17 @@ export const patchReviewPenyewa = async (req, res, next) => {
       }
     }
 
+    if (
+      dataPayload["simpan-pengaturan-review"] !== undefined &&
+      typeof dataPayload["simpan-pengaturan-review"] !== "boolean"
+    ) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Field 'simpan-pengaturan-review' wajib berupa boolean (true atau false).",
+        { kebutuhan_payload: kontrakPenyewaUbahReview },
+      );
+    }
+
     const idPenyewa = req.pengguna._id || req.pengguna.id;
     const hasil = await penyewaReviewService.ubahReviewPenyewa(
       idPenyewa,
@@ -164,6 +192,57 @@ export const patchReviewPenyewa = async (req, res, next) => {
     res.status(200).json({
       status: "sukses",
       pesan: "Ulasan Anda berhasil diperbarui.",
+      data: hasil,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const patchPengaturanReview = async (req, res, next) => {
+  try {
+    const dataPayload = req.body ?? {};
+    const { "simpan-pengaturan-review": simpanPengaturan } = dataPayload;
+
+    if (simpanPengaturan === undefined) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Field 'simpan-pengaturan-review' wajib diisi!",
+        { kebutuhan_payload: kontrakPenyewaPengaturanReview },
+      );
+    }
+
+    const fieldDiizinkan = ["simpan-pengaturan-review"];
+    const fieldAsing = Object.keys(dataPayload).filter(
+      (key) => !fieldDiizinkan.includes(key),
+    );
+    if (fieldAsing.length > 0) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `Field tidak dikenali atau tidak diizinkan: ${fieldAsing.join(", ")}.`,
+        { kebutuhan_payload: kontrakPenyewaPengaturanReview },
+      );
+    }
+
+    if (typeof simpanPengaturan !== "boolean") {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Field 'simpan-pengaturan-review' wajib berupa boolean (true atau false).",
+        { kebutuhan_payload: kontrakPenyewaPengaturanReview },
+      );
+    }
+
+    const idPenyewa = req.pengguna._id || req.pengguna.id;
+    const hasil = await penyewaReviewService.aturPengaturanReviewPenyewa(
+      idPenyewa,
+      simpanPengaturan,
+    );
+
+    res.status(200).json({
+      status: "sukses",
+      pesan: simpanPengaturan
+        ? "Pengaturan disimpan. Pop-up pengingat ulasan dinonaktifkan."
+        : "Pengaturan disimpan. Pop-up pengingat ulasan diaktifkan kembali.",
       data: hasil,
     });
   } catch (error) {

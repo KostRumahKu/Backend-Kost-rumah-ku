@@ -129,7 +129,7 @@ export const patchReviewAdmin = async (req, res, next) => {
       );
     }
 
-    const fieldDiizinkan = ["bintang", "deskripsi", "terisi"];
+    const fieldDiizinkan = ["bintang", "deskripsi", "terisi", "simpan-pengaturan-review",];
     const fieldAsing = Object.keys(dataPayload).filter(
       (key) => !fieldDiizinkan.includes(key),
     );
@@ -165,8 +165,8 @@ export const patchReviewAdmin = async (req, res, next) => {
         "Field 'terisi' wajib berupa boolean (true atau false).",
       );
     }
-
-     if ( typeof bintang !== "number" ) {
+  if (bintang !== undefined) {
+    if ( typeof bintang !== "number" ) {
         throw new AppError(
             "VALIDATION_ERROR",
             "Field 'bintang' berupa number.",
@@ -185,6 +185,17 @@ export const patchReviewAdmin = async (req, res, next) => {
             "VALIDATION_ERROR",
             "Rating bintang minimal 1",
         );
+    }
+  }
+
+    if (
+      dataPayload["simpan-pengaturan-review"] !== undefined &&
+      typeof dataPayload["simpan-pengaturan-review"] !== "boolean"
+    ) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Field 'simpan-pengaturan-review' wajib berupa boolean (true atau false).",
+      );
     }
 
     const hasil = await adminReviewService.ubahReviewOlehAdmin(
