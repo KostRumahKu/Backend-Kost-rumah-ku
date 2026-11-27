@@ -1,21 +1,58 @@
 import express from "express";
 import authRoutes from "./auth-route.js";
 import kamarRoutes from "./admin-routes/admin-kamar-route.js";
-import { getKamarPublikData } from "../controllers/public-controllers/public-controller.js";
+import {
+  getKamarPublikData,
+  postBookingKamar,
+  postUploadBuktiBooking,
+  getDetailPemesananPublik,
+  getFasilitasKost,
+  getSemuaPeraturan,
+  getReviewPublik,
+} from "../controllers/public-controllers/public-controller.js";
 import penyewaRoute from "./penyewa-routes/penyewa-route.js";
 import adminDashboardRoute from "./admin-routes/admin-dashboard-route.js";
 import adminPengumumanRoute from "./admin-routes/admin-pengumuman-route.js"
-
-// import pemilikRoutes from "./pemilik.route.js";
-// import pelangganRoutes from "./pelanggan.route.js";
-
+import adminPengajuanRoute from "./admin-routes/admin-pengajuan-route.js";
+import { getDaftarRekeningPublik } from "../controllers/public-controllers/public-controller.js";
+import rekeningRoutes from "./admin-routes/admin-rekening-route.js";
+import adminBookingRoutes from "./admin-routes/admin-booking-route.js";
+import adminPeraturanRoutes from "./admin-routes/admin-peraturan-route.js";
+import pdfPeneywaGenerate from "./penyewa-routes/penyewa-tagihan-route.js";
+import pdfAdminGenerate from "./admin-routes/admin-generate.js";
+import adminTagihanRoutes from "./admin-routes/admin-tagihan-route.js"
+import rutePembayaranPenyewa from "./penyewa-routes/penyewa-pembayaran-tagihan-route.js";
+import adminKasKostRoute from "./admin-routes/admin-kas-kost-route.js";
+import adminPenggunaRoute from "./admin-routes/admin-edit-pengguna-route.js";
+import adminFasilitasRoute from "./admin-routes/admin-fasilitas-route.js";
+import penyewaReviewRoute from "./penyewa-routes/penyewa-review-route.js";
+import adminReviewRoute from "./admin-routes/admin-review-route.js";
 const router = express.Router();
 
 router.use("/auth", authRoutes);
 router.use("/admin/kamar", kamarRoutes);
 router.get("/public/data-kamar", getKamarPublikData);
+router.post("/public/booking", postBookingKamar);
+router.post("/public/booking/upload-bukti", postUploadBuktiBooking); 
 router.use("/penyewa", penyewaRoute);
 router.use("/admin/dashboard", adminDashboardRoute);
 router.use("/admin/pengumuman", adminPengumumanRoute);
-
+router.use("/admin/pengajuan", adminPengajuanRoute);
+router.get("/public/rekening", getDaftarRekeningPublik);
+router.use("/admin/rekening", rekeningRoutes);
+router.use("/admin/booking", adminBookingRoutes);
+router.use("/admin/peraturan", adminPeraturanRoutes);
+router.get("/public/semua-peraturan", getSemuaPeraturan);
+router.get("/public/fasilitas-kost", getFasilitasKost); 
+router.use("/penyewa", pdfPeneywaGenerate); //ini khusus tagihan
+router.use("/admin/generate", pdfAdminGenerate);
+router.use("/admin/tagihan", adminTagihanRoutes);
+router.use("/penyewa", rutePembayaranPenyewa);
+router.use("/admin/keuangan", adminKasKostRoute);
+router.get("/public/booking/:id", getDetailPemesananPublik);
+router.use("/admin/pengguna", adminPenggunaRoute);
+router.use("/admin/fasilitas", adminFasilitasRoute);
+router.get("/public/review", getReviewPublik);
+router.use("/penyewa/review", penyewaReviewRoute);
+router.use("/admin/review", adminReviewRoute);
 export default router;

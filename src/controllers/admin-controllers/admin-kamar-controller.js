@@ -2,19 +2,38 @@ import * as kamarService from "../../services/admin-services/admin-kamar-service
 import {
   kontrakInputPenghuni,
   kontrakPindahKamar,
+  kontrakTambahKamar,
   kontrakUbahKamar,
 } from "../../contracts/kamar-contract.js";
 import { AppError } from "../../errors.js";
+import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
 
 export const tambahKamar = async (req, res) => {
-  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
-    throw new AppError("VALIDATION_ERROR", "Payload kamar wajib berupa object.");
+  const dataPayload = req.body;
+
+  if (
+    !dataPayload ||
+    typeof dataPayload !== "object" ||
+    Array.isArray(dataPayload)
+  ) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Payload kamar wajib berupa object.",
+    );
   }
 
-  const kamarBaru = await kamarService.tambahKamarBaru(req.body);
+  if (dataPayload.lantai === undefined || !dataPayload["tipe-kamar"]) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Format request tidak lengkap! 'lantai' dan 'tipe-kamar' wajib diisi.",
+      { kebutuhan_payload: kontrakTambahKamar },
+    );
+  }
+
+  const kamarBaru = await kamarService.tambahKamarBaru(dataPayload);
   res.status(201).json({
     status: "sukses",
-    pesan: "Kamar berhasil ditambahkan",
+    pesan: `Kamar ${kamarBaru["nama-kamar"]} (tipe ${kamarBaru["tipe-kamar"]}) berhasil ditambahkan`,
     data: kamarBaru,
   });
 };
@@ -51,14 +70,20 @@ export const ubahKamar = async (req, res) => {
     );
   }
 
+  const isUpdateFoto = Array.isArray(dataUpdate.foto);
+
   const kamarDiperbarui = await kamarService.ubahDataKamar(
     req.params.id,
     dataUpdate,
   );
 
+  const pesanSukses = isUpdateFoto
+    ? `Data kamar berhasil diperbarui dan galeri foto disinkronkan ke seluruh kamar bertipe '${kamarDiperbarui["tipe-kamar"]}'.`
+    : "Data kamar berhasil diperbarui";
+
   res.status(200).json({
     status: "sukses",
-    pesan: "Data kamar berhasil diperbarui",
+    pesan: pesanSukses,
     data: kamarDiperbarui,
   });
 };
@@ -81,12 +106,20 @@ export const resetKamar = async (req, res) => {
   const idKamar = req.params.id;
   const catatan = req.body?.catatan;
 
-  await kamarService.resetKamar(idKamar, catatan);
+  const hasil = await kamarService.resetKamar(idKamar, catatan);
+
+  const pesanRefund =
+    hasil.refund > 0
+      ? ` Terdapat sisa saldo sewa sebesar Rp ${hasil.refund.toLocaleString("id-ID")} yang wajib dikembalikan (refund) dan telah dicatat sebagai pengeluaran di Buku Kas.`
+      : " Tidak ada sisa saldo sewa untuk dikembalikan.";
 
   res.status(200).json({
     status: "sukses",
-    pesan:
-      "Kamar berhasil direset menjadi kosong dan riwayat penghuni telah diarsipkan",
+    pesan: `Kamar berhasil direset menjadi kosong dan riwayat penghuni telah diarsipkan.${pesanRefund}`,
+    data: {
+      kamar: hasil.kamar,
+      "total-refund": hasil.refund,
+    },
   });
 };
 
@@ -113,6 +146,31 @@ export const inputPenghuniManual = async (req, res) => {
       { kebutuhan_payload: kontrakInputPenghuni },
     );
   }
+  const metodeNormalized = dataSewa["metode-pembayaran"].toLowerCase().trim();
+  if (!["tunai", "transfer"].includes(metodeNormalized)) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Metode pembayaran tidak valid! Gunakan 'tunai' atau 'transfer'.",
+      { kebutuhan_payload: kontrakInputPenghuni },
+    );
+  }
+
+  if (metodeNormalized === "transfer" && !dataSewa["id-rekening"]) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "ID Rekening tujuan wajib dipilih jika metode pembayaran adalah 'transfer'.",
+      { kebutuhan_payload: kontrakInputPenghuni },
+    );
+  }
+  if (
+    dataSewa["metode-pembayaran"].toLowerCase() === "transfer" &&
+    !dataSewa["id-rekening"]
+  ) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "ID Rekening tujuan wajib dipilih jika metode pembayaran adalah 'transfer'.",
+    );
+  }
 
   if (typeof dataSewa["durasi-bulan"] !== "number") {
     throw new AppError(
@@ -121,15 +179,24 @@ export const inputPenghuniManual = async (req, res) => {
     );
   }
 
-  if (
-    dataPengguna["nomor-telepon"] ===
-    dataPengguna["nomor-kontak-darurat"]
-  ) {
+  const teleponBaku = normalisasiNomorHP(
+    dataPengguna["nomor-telepon"],
+    "Nomor telepon",
+  );
+  const daruratBaku = normalisasiNomorHP(
+    dataPengguna["nomor-kontak-darurat"],
+    "Nomor kontak darurat",
+  );
+
+  if (teleponBaku === daruratBaku) {
     throw new AppError(
-      "VALIDATION_ERROR",
+      "BAD_REQUEST",
       "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
     );
   }
+
+  dataPengguna["nomor-telepon"] = teleponBaku;
+  dataPengguna["nomor-kontak-darurat"] = daruratBaku;
 
   const hasil = await kamarService.inputPenghuniManual(idKamar, dataPayload);
 
@@ -174,15 +241,24 @@ export const entryDataLama = async (req, res) => {
     );
   }
 
-  if (
-    dataPengguna["nomor-telepon"] ===
-    dataPengguna["nomor-kontak-darurat"]
-  ) {
+  const teleponBaku = normalisasiNomorHP(
+    dataPengguna["nomor-telepon"],
+    "Nomor telepon",
+  );
+  const daruratBaku = normalisasiNomorHP(
+    dataPengguna["nomor-kontak-darurat"],
+    "Nomor kontak darurat",
+  );
+
+  if (teleponBaku === daruratBaku) {
     throw new AppError(
-      "VALIDATION_ERROR",
+      "BAD_REQUEST",
       "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
     );
   }
+
+  dataPengguna["nomor-telepon"] = teleponBaku;
+  dataPengguna["nomor-kontak-darurat"] = daruratBaku;
 
   const hasil = await kamarService.entryDataLama(idKamar, dataPayload);
 

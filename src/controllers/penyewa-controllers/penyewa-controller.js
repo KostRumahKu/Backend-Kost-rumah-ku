@@ -1,4 +1,8 @@
 import * as penyewaService from "../../services/penyewa-services/penyewa-service";
+import { kontrakPenyewaUpdateProfil, kontrakPenyewaMintaGantiEmail, kontrakPenyewaKonfirmasiEmailDanaOtp, kontrakPenyewaGantiPassword } from "../../contracts/penyewa-contract"
+import { AppError } from "../../errors.js";
+import { normalisasiNomorHP } from "../../utils/validasi-format-nomor-hp.js";
+
 
 export const getDashboardPenyewa = async (req, res) => {
   const idPengguna = req.pengguna._id || req.pengguna.id;
@@ -36,5 +40,126 @@ export const getPengumumanPenyewa = async (req, res) => {
     status: "sukses",
     pesan: "Berhasil memuat daftar pengumuman.",
     data: dataPengumuman,
+  });
+};
+
+export const updateProfilPenyewa = async (req, res) => {
+  const idPengguna = req.pengguna._id || req.pengguna.id;
+  const dataUpdate = req.body || {};
+
+  const fieldWajib = [
+      "nama-lengkap", 
+      "nomor-telepon", 
+      "nama-kontak-darurat", 
+      "nomor-kontak-darurat"
+    ];
+    
+    for (const field of fieldWajib) {
+      if (!dataUpdate[field]) {
+        throw new AppError(
+          "VALIDATION_ERROR",
+          "Tidak ada data yang dikirim untuk diperbarui.",
+          { kebutuhan_payload: kontrakPenyewaUpdateProfil,
+            API_note: "Karena ini Update data jadi cukup kirimkan salah satu field yang mau diganti saja",
+          },
+        );
+      }
+    }
+    
+    const teleponBaku = normalisasiNomorHP(
+      dataUpdate["nomor-telepon"],
+      "Nomor telepon",
+    );
+    const daruratBaku = normalisasiNomorHP(
+      dataUpdate["nomor-kontak-darurat"],
+      "Nomor kontak darurat",
+    );
+
+    if (teleponBaku === daruratBaku) {
+      throw new AppError(
+        "BAD_REQUEST",
+        "Nomor telepon penyewa dan nomor kontak darurat tidak boleh sama!",
+      );
+    }
+
+    dataUpdate["nomor-telepon"] = teleponBaku;
+    dataUpdate["nomor-kontak-darurat"] = daruratBaku;
+
+  await penyewaService.ubahProfilPenyewa(idPengguna, dataUpdate);
+  
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Profil berhasil diperbarui."
+  });
+};
+
+export const hapusFotoProfil = async (req, res) => {
+  const idPengguna = req.pengguna._id || req.pengguna.id;
+  
+  await penyewaService.hapusFotoPenyewa(idPengguna);
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Foto profil berhasil dihapus."
+  });
+};
+
+export const requestOtpEmail = async (req, res) => {
+
+  const idPengguna = req.pengguna._id || req.pengguna.id;
+  const { "email-baru": emailBaru } = req.body || {};
+
+  if (!emailBaru)
+    throw new AppError("BAD_REQUEST", "Email baru wajib diisi.", {
+      kebutuhan_payload: kontrakPenyewaMintaGantiEmail,
+    });
+
+  await penyewaService.requestOtpGantiEmail(idPengguna, emailBaru);
+
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Kode OTP telah dikirim ke email baru Anda. Berlaku selama 5 menit."
+  });
+};
+
+export const verifikasiOtpEmail = async (req, res) => {
+  const idPengguna = req.pengguna._id || req.pengguna.id;
+  const { "email-baru": emailBaru, otp } = req.body || {};
+
+  if (!emailBaru || !otp)
+    throw new AppError("BAD_REQUEST", "Email baru dan otp  wajib diisi.", {
+      kebutuhan_payload: kontrakPenyewaKonfirmasiEmailDanaOtp,
+    });
+
+  const emailUpdate = await penyewaService.verifikasiOtpGantiEmail(idPengguna, emailBaru, otp);
+
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Email berhasil diubah.",
+    data: { email: emailUpdate }
+  });
+};
+
+export const updatePasswordPenyewa = async (req, res) => {
+  
+  const idPengguna = req.pengguna._id || req.pengguna.id;
+  
+  const { 
+    "password-lama": passwordLama, 
+    "password-baru": passwordBaru 
+  } = req.body || {};
+
+  if (!passwordLama || !passwordBaru) {
+    throw new AppError(
+      "BAD_REQUEST",
+      "Password lama dan password baru wajib diisi.",
+      { kebutuhan_payload: kontrakPenyewaGantiPassword },
+    );
+  }
+
+  await penyewaService.gantiPasswordPenyewa(idPengguna, passwordLama, passwordBaru);
+
+  res.status(200).json({
+    status: "sukses",
+    pesan: "Password berhasil diperbarui. Silakan gunakan password baru Anda untuk login selanjutnya."
   });
 };
